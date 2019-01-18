@@ -1,4 +1,4 @@
-= Paradux: a scheme to recover from maximum personal data disaster
+# Paradux: a scheme to recover from maximum personal data disaster
 
 This repo is intended for code that implements Paradux, the data
 recovery scheme outlined
@@ -31,20 +31,27 @@ But here's the plan for V1:
 
 * `paradux edit` or such will:
 
-  #. ask the user for the operational credential
-  #. decrypt and mount the LUKS file. in a way that only the current user
+  1. ask the user for the operational credential
+
+  1. decrypt and mount the LUKS file. in a way that only the current user
      can get at it (or such)
-  #. execute the file editor in `$EDITOR` on that JSON file.
-  #. Upon edit abort, everything is aborted
-  #. Upon edit save of the editor, a syntax/structure check is performed.
+
+  1. execute the file editor in `$EDITOR` on that JSON file.
+
+  1. Upon edit abort, everything is aborted
+
+  1. Upon edit save of the editor, a syntax/structure check is performed.
      If invalid, the editor is re-invoked.
-  #. Once syntax/structure check has passed, various configuration files
+
+  1. Once syntax/structure check has passed, various configuration files
      are being generated, daemons started/restarted/etc so that by the
      time this command quits, Paradux runs according to the spec in the
      JSON file.
-  #. A copy of the JSON file is encrypted and uploaded to the the metadata
+
+  1. A copy of the JSON file is encrypted and uploaded to the the metadata
      stashes defined in the JSON file.
-  #. The LUKS filesystem is unmounted and the `cryptsetup` device mapping
+
+  1. The LUKS filesystem is unmounted and the `cryptsetup` device mapping
      is removed.
 
 * The JSON file describes the Replica Sets and each Data Stash in each
