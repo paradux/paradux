@@ -31,14 +31,14 @@ But here's the plan for V1:
 
 * `paradux edit` or such will:
 
-  1. ask the user for the operational credential
+  1. Ask the user for the Operational Credential.
 
-  1. decrypt and mount the LUKS file. in a way that only the current user
-     can get at it (or such)
+  1. Decrypt and mount the LUKS file, in a way that only the current user
+     can get at it (or such).
 
-  1. execute the file editor in `$EDITOR` on that JSON file.
+  1. Execute the file editor in `$EDITOR` on that JSON file.
 
-  1. Upon edit abort, everything is aborted
+  1. Upon edit abort, everything is aborted.
 
   1. Upon edit save of the editor, a syntax/structure check is performed.
      If invalid, the editor is re-invoked.
@@ -100,4 +100,6 @@ But here's the plan for V1:
 
   * `paradux status`: shows current system status, such as which backups
      have run last, etc.
+
+Want to help? Get in touch! My contact info is in the commit log.
 
