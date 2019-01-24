@@ -8,3 +8,8 @@
 
 def run() :
     print( "Hi!" )
+
+def description() :
+    return """
+A dummy command saying Hi.
+"""

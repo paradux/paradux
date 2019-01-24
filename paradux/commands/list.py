@@ -6,10 +6,24 @@
 # All rights reserved. License: see package.
 #
 
+import importlib
 import paradux.utils
 
 def run() :
     cmds = paradux.utils.findSubmodules(paradux.commands)
-    print('List of known sub-commands:')
+    print('paradux sub-commands:')
     for cmd in sorted(cmds) :
         print( '    ' + cmd )
+        try:
+            mod=importlib.import_module('paradux.commands.' + cmd)
+            desc = mod.description()
+            desc = desc.strip().replace( '!\s*\n\s*!', '\n        ' );
+            print( '        ' + desc )
+
+        except AttributeError:
+            print()
+
+def description() :
+    return """
+Prints out the known sub-commands.
+"""
