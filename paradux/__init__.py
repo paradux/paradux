@@ -1,3 +1,11 @@
+#!/usr/bin/python
+#
+# Setup the package.
+#
+# Copyright (C) 2019 and later, Paradux project.
+# All rights reserved. License: see package.
+#
+
 import argparse
 import importlib
 import paradux.commands

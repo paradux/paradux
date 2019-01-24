@@ -1,4 +1,10 @@
 #!/usr/bin/python
+#
+# Primary executable.
+#
+# Copyright (C) 2019 and later, Paradux project.
+# All rights reserved. License: see package.
+#
 
 import paradux
 

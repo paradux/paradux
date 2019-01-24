@@ -1,3 +1,11 @@
+#!/usr/bin/python
+#
+# Collection of utility functions.
+#
+# Copyright (C) 2019 and later, Paradux project.
+# All rights reserved. License: see package.
+#
+
 import pkgutil
 
 def findSubmodules(packageName) :

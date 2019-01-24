@@ -1,3 +1,11 @@
+#!/usr/bin/python
+#
+# Setup the package.
+#
+# Copyright (C) 2019 and later, Paradux project.
+# All rights reserved. License: see package.
+#
+
 from setuptools import setup
 
 setup(name='paradux',

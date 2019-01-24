@@ -1,3 +1,11 @@
+#!/usr/bin/python
+#
+# Sub-command that lists all currently known sub-commands.
+#
+# Copyright (C) 2019 and later, Paradux project.
+# All rights reserved. License: see package.
+#
+
 import paradux.utils
 
 def run() :
