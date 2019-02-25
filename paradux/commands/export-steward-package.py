@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Print the current paradux status.
+# Export the Steward Package for one or more Stewards.
 #
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
@@ -14,5 +14,5 @@ def run(conf) :
 
 def description() :
     return """
-Print the current status of this Paradux installation.
+Export the Steward Package for one or more Stewards.
 """

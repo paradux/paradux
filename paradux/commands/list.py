@@ -9,7 +9,10 @@
 import importlib
 import paradux.utils
 
-def run() :
+def run(conf) :
+    """
+    Run this command with configuration conf
+    """
     cmds = paradux.utils.findSubmodules(paradux.commands)
     print('paradux sub-commands:')
     for cmd in sorted(cmds) :

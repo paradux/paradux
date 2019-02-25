@@ -6,7 +6,9 @@
 # All rights reserved. License: see package.
 #
 
+import os
 import pkgutil
+import paradux.log
 
 def findSubmodules(packageName) :
     ret = []
@@ -14,3 +16,7 @@ def findSubmodules(packageName) :
         ret.append(modname)
     return ret
 
+def myexec(cmd):
+    paradux.log.trace('myexec: ' + cmd )
+    ret = os.system(cmd)
+    return ret

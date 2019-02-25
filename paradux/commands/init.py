@@ -1,18 +1,23 @@
 #!/usr/bin/python
 #
-# Print the current paradux status.
+# Initial setup.
 #
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
 
+import paradux
+
 def run(conf) :
     """
     Run this command with configuration conf
     """
-    print( "FIXME!" )
+    paradux.init_mount_config_data_image(conf)
+
+    paradux.make_unavailable_config_data(conf)
+
 
 def description() :
     return """
-Print the current status of this Paradux installation.
+Sets up a Paradux installation for the first time.
 """

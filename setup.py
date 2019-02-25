@@ -13,4 +13,5 @@ setup(name='paradux',
       description='Recovery from maximum personal data disaster',
       url='http://github.com/paradux/paradux',
       packages=['paradux'],
-      zip_safe=False)
+      zip_safe=False,
+      install_requires=['cryptography'])
