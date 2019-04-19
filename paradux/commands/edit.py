@@ -30,9 +30,8 @@ def run(args, settings) :
                 break # all fine, we are done
 
             print( report.asText() )
-            print( 'Continue editing? Y/N' )
 
-            if getc() == 'N':
+            if input( 'Continue editing? Y/N: ' ).lower() == 'n':
                 break
 
     finally:

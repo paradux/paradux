@@ -11,7 +11,7 @@ import importlib
 import os.path
 import paradux.commands
 import paradux.settings
-import paradux.logging
+from paradux.logging import FatalException
 import paradux.utils
 import secrets
 import sys

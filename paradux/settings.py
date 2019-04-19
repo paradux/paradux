@@ -8,10 +8,12 @@
 
 import os
 import os.path
+import paradux.configuration
 import paradux.logging
 import paradux.utils
 import pathlib
 import posixpath
+from shutil import copyfile
 
 
 # Default paradux data directory
@@ -67,27 +69,19 @@ class Settings:
         throws: exception if the image exists already
         """
 
-        paradux.logging.info('Creating image: ', self.image_file)
+        paradux.logging.info('Creating image:', self.image_file)
 
-        # if image exists, throw exception
         if self._image_exists():
             raise FileExistsError(self.image_file)
 
         if self._cryptsetup_isopen():
             raise FileExistsError(self.crypt_device_path)
             
-        # create image file
         self._image_create()
-
-        # set up cryptsetup on it
         self._cryptsetup_open()
-        
-        # format image
         self._image_format()
-
-        # mount
         self._image_mount()
-
+        self._image_set_permissions()
 
     def mountImage(self):
         """
@@ -96,16 +90,12 @@ class Settings:
         return: void
         """
 
-        paradux.logging.info('Mounting image: ', self.image_file)
+        paradux.logging.info('Mounting image:', self.image_file)
 
-        # check image exists
         if not self._image_exists():
             raise FileNotFoundError(self.image_file)
 
-        # cryptsetup
         self._cryptsetup_open()
-       
-        # mount
         self._image_mount()
 
 
@@ -116,12 +106,12 @@ class Settings:
         return: void
         """
 
-        paradux.logging.info('Initializing configuration -- FIXME')
+        paradux.logging.info('Initializing configuration with defaults')
 
-        # check image mounted
-        # check that no config JSON exists
-
-        paradux.logging.fatal('FIXME')
+        conf = paradux.configuration.default()
+        with open(self.config_file, 'w') as file:
+            file.write( conf.asJson() )
+        os.chmod(self.config_file, 0o600)
 
 
     def editTempConfiguration(self):
@@ -129,16 +119,26 @@ class Settings:
         Edit the temporary config JSON file. If it does not exist yet,
         create it from the master.
 
-        return: True if saved affirmatively; False if editing was aborted
+        return: True if successful
         """
 
-        paradux.logging.info('Editing temporary configuration file -- FIXME')
+        paradux.logging.info('Editing temporary configuration file')
 
-        # check that config JSON file exists
-        # if no temp config JSON file, copy
-        # edit tmp config JSON
+        if not os.path.isfile(self.temp_config_file):
+            copyfile(self.config_file, self.temp_config_file)
+            os.chmod(self.temp_config_file, 0o600)
 
-        paradux.logging.fatal('FIXME')
+        if 'EDITOR' in os.environ:
+            editor = os.environ['EDITOR']
+            if paradux.utils.myexec(editor + " '" + self.temp_config_file + "'"):
+                paradux.logging.fatal('editing file failed')
+
+            return True
+
+        else:
+            paradux.logging.error('No EDITOR environment variable set. Cannot edit file.')
+        
+        return False
 
 
     def abortTempConfiguration(self):
@@ -148,11 +148,14 @@ class Settings:
         return: void
         """
 
-        paradux.logging.info('Aborting edit of temporary configuration file -- FIXME')
+        paradux.logging.info('Aborting edit of temporary configuration file')
 
-        # if temp config JSON file exists, delete
+        if os.path.isfile(self.temp_config_file):
+            paradux.logging.trace('Deleting:', self.temp_config_file)
+            os.remove(self.temp_config_file)
 
-        paradux.logging.fatal('FIXME')
+        else:
+            paradux.logging.trace('No need to delete, does not exist:', self.temp_config_file)
 
 
     def checkTempConfiguration(self):
@@ -167,7 +170,7 @@ class Settings:
         # create report
         # if no temp config JSON file exists, return empty report
         paradux.logging.trace('file exists?', self.temp_config_file)
-        if os.path.is_file(self.temp_config_file):
+        if os.path.isfile(self.temp_config_file):
             return paradux.configuration.analyze_json(self.temp_config_file)
         else:
             return ConfigurationReport()
@@ -185,7 +188,7 @@ class Settings:
 
         # if temp config JSON file exists, move it to config JSON file
         paradux.logging.trace('file exists?', self.temp_config_file)
-        if os.path.is_file(self.temp_config_file):
+        if os.path.isfile(self.temp_config_file):
             paradux.logging.trace('promoting', self.temp_config_file, '->', self.config_file)
             os.replace(self.temp_config_file, self.config_file)
 
@@ -211,11 +214,9 @@ class Settings:
 
         paradux.logging.info('Cleaning up')
 
-        # if image is mounted, unmount
         if self._image_ismounted():
             self._image_umount()
 
-        # if device exists, remove device
         if self._cryptsetup_isopen():
             self._cryptsetup_close()
 
@@ -314,6 +315,24 @@ If you lose it, paradux lets you recover with the help of your stewards.
         if paradux.paradux.utils.myexec("sudo umount '" + self.crypt_device_path + "'"):
             paradux.logging.fatal('umount failed')
     
+
+    def _image_set_permissions(self):
+        """
+        Set the correct permissions on a new mounted image.
+
+        return: void
+        """
+        paradux.logging.trace('changing permissions')
+
+        # must be performed as root
+        if paradux.paradux.utils.myexec("sudo chown " + str(os.getuid()) + ":" + str(os.getgid()) + " '" + self.image_mount_point + "'"):
+            paradux.logging.fatal('chown failed')
+
+        if paradux.paradux.utils.myexec("sudo chmod 0700 '" + self.image_mount_point + "'"):
+            paradux.logging.fatal('chmod failed')
+        
+        paradux.logging.debugAndSuspend( 'Check permissions' )
+
 
     def _cryptsetup_open(self):
         """

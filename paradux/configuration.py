@@ -4,7 +4,11 @@
 # All rights reserved. License: see package.
 #
 
+import json
+from paradux.configurationreport import ConfigurationReport, ConfigurationReportItem, Level
 import paradux.logging
+import re
+
 
 def parse_json(filename):
     """
@@ -14,7 +18,13 @@ def parse_json(filename):
     filename: name of the JSON file to parse
     return: the Configuration object
     """
-    return Configuration() # FIXME
+    with open(filename, 'r') as file:
+        jsonText = file.read()
+
+    withoutComments = re.sub(r'(?<!\\)#.*', '', jsonText)
+    j = json.loads(withoutComments)
+
+    return Configuration(jsonText)
 
 
 def analyze_json(filename):
@@ -25,14 +35,81 @@ def analyze_json(filename):
     filename: name of the JSON file to parse
     return: the ConfigurationReport object
     """
-    items = [] # FIXME
+    items = []
+
+    with open(filename, 'r') as file:
+        jsonText = file.read()
+
+    withoutComments = re.sub(r'(?<!\\)#.*', '', jsonText)
+    j = json.loads(withoutComments)
+
+    items.append( ConfigurationReportItem( Level.NOTICE, "Hi mom" ))
+
     return ConfigurationReport(items)
     
 
-class Configuration:
-    @classmethod
+def default():
+    """
+    Obtain the default, empty, Configuration.
 
-    def __init__(self, ...) :
+    return: the ConfigurationReport object
+    """
+    return Configuration(
+"""{
+    "datasets" : [
+#        {
+#            "name" : "home-myself",
+#            "description" : "my own home directory",
+#
+#
+#            "source" : {
+#                "description" : "my own home directory on my laptop",
+#                "url" : "rsync+ssh://laptop.local/home/myself",
+#                "credentials" : {
+#                    "ssh-user" : "me",
+#                    "ssh-key"  : "ssh-rsa ..."
+#                }
+#            },
+#
+#            "destinations" : [
+#                {
+#                    "name" : "Apple Time Capsule",
+#                    "location" : "Home office",
+#                    "frequency" : "automatic"
+#                },
+#                {
+#                    "name" : "Amazon S3",
+#                    "url" : "s3://mybucket/home-myself",
+#                    "credentials" : {
+#                        "aws-access-key" : "Axxx",
+#                        "aws-secret-key" : "Axxx"
+#                    },
+#                    "frequency" : 86400,
+#                    "encryption" : {
+#                        "gpg-keyid" : "..."
+#                    }
+#                }
+#            ]
+#        }
+    ],
+    "stewards" : [
+#        {
+#            "name": "John Doe"
+#        }
+    ]
+}
+""")
+
+    
+class Configuration:
+    def __init__(self, jsonText) :
+        self.jsonText = jsonText # We preserve the source, so we can keep comments around
+
+    def asJson(self):
+        """
+        Obtain this Configuration as JSON
+        """
+        return self.jsonText
 
 
     def asText(self):
@@ -53,3 +130,5 @@ class Configuration:
         """
         paradux.logging.fatal('FIXME')
         
+
+        conf = paradux.configuration.default()

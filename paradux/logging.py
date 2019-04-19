@@ -143,7 +143,7 @@ def fatal(*args):
         if LOG.isEnabledFor(logging.CRITICAL):
             LOG.critical(_constructMsg(False, LOG.isEnabledFor(logging.DEBUG), args))
 
-    exit(1)
+    raise SystemExit(1) # Don't call exit() because that will close stdin
 
 
 def isFatalActive():
@@ -219,3 +219,13 @@ def _constructMsg(withLoc, withTb, *args):
 
     return ret
 
+
+class FatalException:
+    """
+    Something fatal happened and we need to abort.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg

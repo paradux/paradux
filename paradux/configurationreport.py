@@ -13,12 +13,12 @@ class Level(Enum):
     WARNING = ( 2, 'WARNING' )
     NOTICE  = ( 3, 'NOTICE'  )
 
-    def __init__(self, level, name):
-        self.level = level
-        self.name  = name
+    def __init__(self, level, myname):
+        self.level  = level
+        self.myname = myname
 
     def __str__(self):
-        return self.name
+        return self.myname
 
 
 class ConfigurationReportItem:
@@ -32,8 +32,8 @@ class ConfigurationReportItem:
         level: the level of the item
         message: the message
     """
-    self.level   = level
-    self.message = message
+        self.level   = level
+        self.message = message
 
 
     def asText(self):
