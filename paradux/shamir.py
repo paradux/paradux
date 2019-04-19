@@ -55,9 +55,10 @@ class ShamirSecretSharing :
                    + "th Mersenne prime): "
                    + str( self.share ))
 
+
     # Maps the n-th Mersenne Prime to the N in its value 2**N-1
     MERSENNE = [
-        1, # not really a prime, but fills index0
+        1, # not really a prime, but fills index=0
         2,
         3,
         5,
@@ -79,7 +80,8 @@ class ShamirSecretSharing :
         4253,
         4423,
         9689 ]
-        
+
+
     def __init__( self, nbits ):
         """
         Constructor.
@@ -100,6 +102,7 @@ class ShamirSecretSharing :
             raise ValueError( "nbits to large for this implementation" )
 
         self.prime = 2**ShamirSecretSharing.MERSENNE[self.mersenne] - 1
+
 
     def split( self, secret, requiredShares, nShares ):
         """
@@ -135,6 +138,7 @@ class ShamirSecretSharing :
             shares[x-1] = ShamirSecretSharing.Share( self.mersenne, x, requiredShares, value )
 
         return shares
+
 
     def restore( self, shares ):
         """

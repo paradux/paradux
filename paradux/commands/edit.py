@@ -1,18 +1,51 @@
 #!/usr/bin/python
 #
-# Edit a Paradux Configuration.
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
 
-def run(conf) :
-    """
-    Run this command with configuration conf
-    """
-    print( "FIXME!" )
+import argparse
+import paradux
 
-def description() :
-    return """
-Modify a Paradux Configuration.
-"""
+
+def run(args, settings) :
+    """
+    Run this command.
+
+    args: parsed command-line arguments
+    settings: settings for this paradux instance
+    """
+    try :
+        settings.mountImage()
+
+        while True:
+            if not settings.editTempConfiguration():
+                settings.abortTempConfiguration()
+                break # user abort
+
+            report = settings.checkTempConfiguration()
+
+            if report.isAllOk():
+                settings.promoteTempConfiguration()
+                break # all fine, we are done
+
+            print( report.asText() )
+            print( 'Continue editing? Y/N' )
+
+            if getc() == 'N':
+                break
+
+    finally:
+        settings.cleanup()
+
+    return True
+
+
+def addSubParser( parentParser, cmdName ) :
+    """
+    Enable this command to add its own command-line options
+    parentParser: the parent argparse parser
+    cmdName: name of this command
+    """
+    parser = parentParser.add_parser( cmdName, help='Modify a paradux configuration.' )
+

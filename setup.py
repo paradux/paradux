@@ -14,4 +14,4 @@ setup(name='paradux',
       url='http://github.com/paradux/paradux',
       packages=['paradux'],
       zip_safe=False,
-      install_requires=['cryptography'])
+      install_requires=['cryptography', 'secrets']])

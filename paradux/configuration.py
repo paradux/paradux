@@ -1,56 +1,55 @@
 #!/usr/bin/python
 #
-# Configuration of the Paradux installation.
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
 
-import pathlib
-import posixpath
+import paradux.logging
 
-DEFAULT_CONFIG_DATA_IMAGE      = posixpath.join(pathlib.Path.home(), '.paradux/config.img' )
-DEFAULT_CONFIG_DATA_IMAGE_SIZE = 2**26 # 64M
-
-class ParaduxConfiguration:
+def parse_json(filename):
     """
-    Collects information about the current Paradux installation
+    Parse a configuration JSON file and return a Configuration object.
+    This assumes the JSON is well-formed syntactically and semantically.
+
+    filename: name of the JSON file to parse
+    return: the Configuration object
     """
-    def __init__(
-            self,
-            config_data_image      = DEFAULT_CONFIG_DATA_IMAGE,
-            config_data_image_size = DEFAULT_CONFIG_DATA_IMAGE_SIZE ) :
-
-        self.config_data_image      = config_data_image
-        self.config_data_image_size = config_data_image_size
+    return Configuration() # FIXME
 
 
-    def get_config_data_image(self):
+def analyze_json(filename):
+    """
+    Analyze a potential configuration JSON file and return a
+    ConfigurationReport object.
+
+    filename: name of the JSON file to parse
+    return: the ConfigurationReport object
+    """
+    items = [] # FIXME
+    return ConfigurationReport(items)
+    
+
+class Configuration:
+    @classmethod
+
+    def __init__(self, ...) :
+
+
+    def asText(self):
         """
-        Obtain the path to the encrypted config data image
+        Obtain a description of this Configuration as text that can
+        be show to the user.
+
+        return: text
         """
-        return self.config_data_image
+        paradux.logging.fatal('FIXME')
 
 
-    def get_config_data_image_size(self):
+    def getStewardPackages(self):
         """
-        Obtain the desired size of the image containing the encrypted
-        file system for the config data
-        """
-        return self.config_data_image_size
+        Obtain the Steward packages.
 
-
-    def get_crypt_device_name(self):
+        return: array of StewardPackage
         """
-        Obtain the name of the device created by cryptsetup.
-        """
-        return 'paradux'
-
-
-    def get_config_data_mountpoint(self):
-        """
-        Obtain the directory where the device created by cryptsetup
-        will be mounted
-        """
-        return '.paradux-mount'
-
+        paradux.logging.fatal('FIXME')
+        

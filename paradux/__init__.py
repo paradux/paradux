@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Setup the package.
+# The central entry point into paradux.
 #
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
@@ -10,114 +10,56 @@ import argparse
 import importlib
 import os.path
 import paradux.commands
-import paradux.configuration
-import paradux.log
+import paradux.settings
+import paradux.logging
 import paradux.utils
+import secrets
 import sys
 
 def run():
     """
     Main entry point into Paradux
     """
+    cmdNames = paradux.utils.findSubmodules(paradux.commands)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('command',                          help='The subcommand to invoke. Use "list" to show available sub-commands.')
-    parser.add_argument('option', nargs=argparse.REMAINDER, help='Options for the sub-command.')
-    parser.add_argument('-v', '--verbose',  action="count", help='Display extra output. May be repeated for even more output.')
+    parser.add_argument('--directory',     action='store',       default=paradux.settings.DEFAULT_DIRECTORY, help='Directory containing the paradux data.' )
+    parser.add_argument('-v', '--verbose', action='count',       default=0,  help='Display extra output. May be repeated for even more output.')
+    parser.add_argument('--debug',         action='store_const', const=True, help='Suspend execution at certain points for debugging' )
+    cmdParsers = parser.add_subparsers( dest='command', required=True )
+
+    cmds = {}
+    for cmdName in cmdNames:
+        mod = importlib.import_module('paradux.commands.' + cmdName)
+        mod.addSubParser( cmdParsers, cmdName )
+        cmds[cmdName] = mod
 
     args,remaining = parser.parse_known_args(sys.argv[1:])
-    cmd = args.command
-    conf = configuration.ParaduxConfiguration()
+    cmdName = args.command
 
-    try:
-        cmds = paradux.utils.findSubmodules(paradux.commands)
-        if(cmd in cmds):
-            mod=importlib.import_module('paradux.commands.' + cmd)
-            mod.run(conf)
-        else:
-            print('Command not found')
-    except log.FatalException as e:
-        exit(1)
+    paradux.logging.initialize(args.verbose, args.debug)
 
+    if len(remaining)>0 :
+        parser.print_help()
+        exit(0)
 
-def init_mount_config_data_image(conf):
-    """
-    Initialize a new Paradux instance
-    """
-    config_data_image      = conf.get_config_data_image()
-    config_data_image_size = conf.get_config_data_image_size()
-    crypt_device_name      = conf.get_crypt_device_name()
+    cmdName = args.command
 
-    if os.path.isfile(config_data_image):
-        log.fatal('File exists already: ' + str(config_data_image))
+    settings = paradux.settings.create(args)
 
-    if not os.path.isdir(os.path.dirname(config_data_image)):
-        os.makedirs(os.path.dirname(config_data_image))
+    if cmdName in cmdNames:
+        try :
+            ret = cmds[cmdName].run(args, settings)
+            exit( 0 if ret == 1 else 1 )
 
-    with open(config_data_image, "w") as file:
-        file.truncate(config_data_image_size)
+        except Exception as e:
+            paradux.logging.fatal( 'Fatal exception', repr(e) )
 
-    print( """Please enter your day-to-day passphrase for the Paradux configuration data
-when asked. Make sure this password is long, hard to guess, and DO NOT
-write this password down anywhere. (If you lose the password, Paradux
-lets you recover with the help of your Stewards.)
-""" )
-
-    if utils.myexec( "cryptsetup luksFormat --batch-mode '" + config_data_image + "'" ):
-        log.fatal('cryptsetup luksFormat failed')
-
-    cryptsetup_open(conf)
-
-    if utils.myexec("sudo mkfs.ext4 '/dev/mapper/" + crypt_device_name + "'"):
-        log.fatal('making ext4 filesystem failed')
-
-    mount_config_data_image(conf)
+    else:
+        paradux.logging.fatal('Sub-command not found:', cmdName, '. Add --help for help.' )
 
 
-
-def make_available_config_data(conf):
-    """
-    Convenience method for the common case
-    """
-    cryptsetup_open(conf)
-    mount_config_data_image(conf)
+def run_not_implemented(args,conf):
+    paradux.logging.fatal('Not implemented yet! Sorry. Want to help? https://github.com/paradux')
 
 
-def make_unavailable_config_data(conf):
-    """
-    Convenience method for the common case
-    """
-    umount_config_data_image(conf)
-    cryptsetup_close(conf)
-
-    
-def cryptsetup_open(conf):
-    config_data_image      = conf.get_config_data_image()
-    crypt_device_name      = conf.get_crypt_device_name()
-
-    if utils.myexec("sudo cryptsetup open '" + config_data_image + "' '" + crypt_device_name + "'"):
-        log.fatal('cryptsetup open failed')
-
-
-def mount_config_data_image(conf):
-    crypt_device_name      = conf.get_crypt_device_name()
-    config_data_mountpoint = conf.get_config_data_mountpoint()
-
-    if not os.path.isdir(config_data_mountpoint):
-        os.makedirs(config_data_mountpoint)
-
-    if utils.myexec("sudo mount '/dev/mapper/" + crypt_device_name + "' '" + config_data_mountpoint + "'"):
-        log.fatal('mount failed')
-
-    
-def umount_config_data_image(conf):
-    crypt_device_name = conf.get_crypt_device_name()
-
-    if utils.myexec("sudo umount '/dev/mapper/" + crypt_device_name + "'"):
-        log.fatal('umount failed')
-    
-
-def cryptsetup_close(conf):
-    crypt_device_name = conf.get_crypt_device_name()
-
-    if utils.myexec("sudo cryptsetup close '" + crypt_device_name + "'"):
-        log.fatal('cryptsetup close failed')

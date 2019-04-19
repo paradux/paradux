@@ -15,17 +15,7 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
-    try :
-        settings.mountImage()
-
-        conf = settings.getConfiguration()
-
-        print( conf.asText() )
-
-    finally:
-        settings.cleanup()
-
-    return True
+    return paradux.run_not_implemented(conf)
 
 
 def addSubParser( parentParser, cmdName ) :
@@ -34,4 +24,4 @@ def addSubParser( parentParser, cmdName ) :
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Print the current status of this paradux configuration.' )
+    parser = parentParser.add_parser( cmdName, help='Recover the paradux configuration from steward packages.' )
