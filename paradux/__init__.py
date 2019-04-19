@@ -53,7 +53,7 @@ def run():
             exit( 0 if ret == 1 else 1 )
 
         except Exception as e:
-            paradux.logging.fatal( 'Fatal exception', repr(e) )
+            paradux.logging.fatal( e )
 
     else:
         paradux.logging.fatal('Sub-command not found:', cmdName, '. Add --help for help.' )

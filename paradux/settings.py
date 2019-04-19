@@ -58,12 +58,11 @@ class Settings:
         self.everyday_key_slot =  0 # LUKS parameter
 
 
-    def createImage(self,recovery_secret):
+    def createAndMountImage(self):
         """
-        Create the initial LUKS image. This does not initialize anything
+        Create the initial LUKS image and mounts it. This does not initialize anything
         inside the image.
 
-        recovery_secret:
         return: void
         throws: exception if the image exists already
         """
@@ -86,8 +85,8 @@ class Settings:
         # format image
         self._image_format()
 
-        # unsetup cryptsetup
-        self._cryptsetup_close()
+        # mount
+        self._image_mount()
 
 
     def mountImage(self):
@@ -246,27 +245,27 @@ class Settings:
             paradux.logging.trace('creating file', self.image_file, 'of size', self.image_size)
             file.truncate(self.image_size)
 
+#        if paradux.utils.myexec(
+#                  'cryptsetup luksFormat'
+#                + ' --batch-mode'
+#                + ' --key-slot=' + str(self.recovery_key_slot)
+#                + ' --key-file=-' # read from stdin
+#                + " '" + self.image_file + "'",
+#                recovery_secret):
+#            paradux.logging.fatal('cryptsetup luksFormat failed')
+
+        print("""
+Please set your everyday passphrase for paradux.
+Make sure this passphrase is long, hard to guess, and DO NOT write it down anywhere.
+If you lose it, paradux lets you recover with the help of your stewards.
+""")
+
         if paradux.utils.myexec(
                   'cryptsetup luksFormat'
                 + ' --batch-mode'
-                + ' --key-slot=' + str(self.recovery_key_slot)
-                + ' --key-file=-' # read from stdin
-                + " '" + self.image_file + "'",
-                recovery_secret):
-            paradux.logging.fatal('cryptsetup luksFormat failed')
-
-        print("""Please enter your everyday passphrase for paradux when asked.
-Make sure this passphrase is long, hard to guess, and DO NOT write it
-down anywhere. (If you lose it, paradux lets you recover with the help
-of your stewards.)""")
-
-        if paradux.utils.myexec(
-                  'cryptsetup luksAddKey'
-                + ' --batch-mode'
                 + ' --key-slot=' + str(self.everyday_key_slot)
                 + ' --key-file=-' # read from stdin
-                + " '" + self.image_file + "'",
-                recovery_secret):
+                + " '" + self.image_file + "'" ):
             paradux.logging.fatal('cryptsetup luksAddKey failed')
 
 
@@ -320,7 +319,10 @@ of your stewards.)""")
         """
         Create/open the cryptsetup device
         """
-        if paradux.utils.myexec("sudo cryptsetup open '" + self.image_file + "' '" + self.crypt_device_path + "'"):
+        print("""
+Enter your everyday passphrase.
+""")
+        if paradux.utils.myexec("sudo cryptsetup open '" + self.image_file + "' '" + self.crypt_device_name + "'"):
             paradux.logging.fatal('cryptsetup open failed')
         
 
@@ -330,6 +332,7 @@ of your stewards.)""")
 
         return: True or False
         """
+        # FIXME? Should this use "cryptsetup status <device>", swallout output, and look at exit code?
         paradux.logging.trace('is block device?', self.crypt_device_path)
         p = pathlib.Path(self.crypt_device_path)
         return p != None and p.is_block_device()

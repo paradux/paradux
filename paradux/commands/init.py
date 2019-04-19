@@ -17,8 +17,7 @@ def run(args, settings) :
     settings: settings for this paradux instance
     """
     try :
-        settings.createImage()
-        settings.mountImage()
+        settings.createAndMountImage()
 
         settings.initConfiguration()
 
@@ -52,14 +51,20 @@ def addSubParser( parentParser, cmdName ) :
         m = re.match(r'(\d+(\.\d*)?)\s*(([kmg]i?)b?)?', value, re.IGNORECASE)
         if m:
             ret = float(m.group(1))
-            if m.group(3) in factors:
-                ret *= factors[m.group(3)]
+            mult = m.group(3).lower()
+            if mult in factors:
+                ret *= factors[mult]
+            else:
+                raise argparse.ArgumentTypeError('Unknown multiplier: ' + mult)
+
             ret = int(ret)
+            if ret < 20 * 1000 * 1000:
+                raise argparse.ArgumentTypeError('Must be at least 20MB')
             return ret
         else:
-            raise argparse.ArgumentTypeError( 'Specify image size like this: 123 MiB' )
+            raise argparse.ArgumentTypeError('Specify image size like this: 123 MiB')
             
         
-    parser = parentParser.add_parser( cmdName, help='Sets up a Paradux installation for the first time.' )
-    parser.add_argument( '--image-size', type=valid_disk_size, default='4 M', help='Size of the LUKS disk image for secrets.' )
+    parser = parentParser.add_parser(cmdName, help='Sets up a Paradux installation for the first time.')
+    parser.add_argument('--image-size', type=valid_disk_size, default='24 M', help='Size of the LUKS disk image for secrets.')
 

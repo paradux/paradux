@@ -34,6 +34,7 @@ def myexec(cmd,stdin=None):
     return: return code
     """
     paradux.logging.debugAndSuspend('myexec:', cmd, 'with stdin:', stdin)
+    paradux.logging.trace(cmd, 'None' if stdin==None else len(stdin))
 
     ret = subprocess.run(cmd, shell=True, input=stdin)
     return ret.returncode

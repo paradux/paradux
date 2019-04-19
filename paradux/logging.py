@@ -14,7 +14,7 @@ import paradux.utils
 import sys
 import traceback
 
-logging.config.dictConfig( {
+logging.config.dictConfig({
     'version'                  : 1,
     'disable_existing_loggers' : False,
     'formatters'               : {
@@ -38,14 +38,14 @@ logging.config.dictConfig( {
             'propagate' : True
         }
     }
-} )
+})
 
 DEBUG = False
-LOG   = logging.getLogger( sys.argv[0][ sys.argv[0].rfind( '/' )+1 : ] if sys.argv[0].rfind( '/' ) >= 0 else sys.argv[0] )
+LOG   = logging.getLogger(sys.argv[0][ sys.argv[0].rfind('/')+1 : ] if sys.argv[0].rfind('/') >= 0 else sys.argv[0])
 
 def initialize(
         verbosity = 0,
-        debug     = False ):
+        debug     = False):
     """
     Invoked at the beginning of a script, this initializes logging.
     
@@ -57,10 +57,10 @@ def initialize(
     global DEBUG
 
     if verbosity == 1:
-        LOG.setLevel( 'INFO' )
+        LOG.setLevel('INFO')
 
     elif verbosity >= 2:
-        LOG.setLevel( 'DEBUG' )
+        LOG.setLevel('DEBUG')
 
     DEBUG = debug;
 
@@ -70,8 +70,8 @@ def trace(*args):
     Emit a trace message.
     args: the message or message components
     """
-    if LOG.isEnabledFor( logging.DEBUG ):
-        LOG.debug( _constructMsgWithLocation( args ))
+    if LOG.isEnabledFor(logging.DEBUG):
+        LOG.debug(_constructMsg(True, False, args))
 
 
 def isTraceActive() :
@@ -79,7 +79,7 @@ def isTraceActive() :
     Is trace logging on?
     return: 1 or 0
     """
-    return LOG.isEnabledFor( logging.DEBUG )
+    return LOG.isEnabledFor(logging.DEBUG)
 
 
 def info(*args):
@@ -87,8 +87,8 @@ def info(*args):
     Emit an info message.
     args: msg: the message or message components
     """
-    if LOG.isEnabledFor( logging.INFO ):
-        LOG.info( _constructMsg( args ))
+    if LOG.isEnabledFor(logging.INFO):
+        LOG.info(_constructMsg(False, False, args))
 
 
 def isInfoActive():
@@ -96,7 +96,7 @@ def isInfoActive():
     Is info logging on?
     return: 1 or 0
     """
-    return LOG.isEnabledFor( logging.INFO )
+    return LOG.isEnabledFor(logging.INFO)
 
 
 def warning(*args):
@@ -105,8 +105,8 @@ def warning(*args):
     args: the message or message components
     """
 
-    if LOG.isEnabledFor( logging.WARNING ):
-        LOG.warn( _constructMsg( args ))
+    if LOG.isEnabledFor(logging.WARNING):
+        LOG.warn(_constructMsg(False, LOG.isEnabledFor(logging.DEBUG), args))
 
 
 def isWarningActive():
@@ -114,7 +114,7 @@ def isWarningActive():
     Is warning logging on?
     return: 1 or 0
     """
-    return LOG.isEnabledFor( logging.WARNING )
+    return LOG.isEnabledFor(logging.WARNING)
 
 
 def error(*args):
@@ -122,8 +122,8 @@ def error(*args):
     Emit an error message.
     args: the message or message components
     """
-    if LOG.isEnabledFor( logging.ERROR ):
-        LOG.error( _constructMsg( args ))
+    if LOG.isEnabledFor(logging.ERROR):
+        LOG.error(_constructMsg(False, LOG.isEnabledFor(logging.DEBUG), args))
 
 
 def isErrorActive():
@@ -131,7 +131,7 @@ def isErrorActive():
     Is error logging on?
     return: 1 or 0
     """
-    return LOG.isEnabledFor( logging.ERROR )
+    return LOG.isEnabledFor(logging.ERROR)
 
 
 def fatal(*args):
@@ -140,14 +140,10 @@ def fatal(*args):
     args: the message or message components
     """
     if args:
-        # print stack trace when debug is on
-        if DEBUG:
-            traceback.print_stack( sys.stderr )
+        if LOG.isEnabledFor(logging.CRITICAL):
+            LOG.critical(_constructMsg(False, LOG.isEnabledFor(logging.DEBUG), args))
 
-        if LOG.isEnabledFor( logging.CRITICAL ):
-            LOG.critical( _constructMsg( args ))
-
-    exit( 1 )
+    exit(1)
 
 
 def isFatalActive():
@@ -155,7 +151,7 @@ def isFatalActive():
     Is fatal logging on?
     return: 1 or 0
     """
-    return LOG.isEnabledFor( logging.CRITICAL )
+    return LOG.isEnabledFor(logging.CRITICAL)
 
 
 def isDebugAndSuspendActive():
@@ -174,56 +170,52 @@ def debugAndSuspend(*args):
     """
     if DEBUG:
         if args:
-            sys.stderr.write( "DEBUG: " + _constructMsg( args ) + "\n" )
+            sys.stderr.write("DEBUG: " + _constructMsg(False, False, args) + "\n")
 
-        sys.stderr.write( "** Hit return to continue. ***\n" )
+        sys.stderr.write("** Hit return to continue. ***\n")
         input();
 
     return DEBUG;
 
 
-def _constructMsgWithLocation( *args):
+def _constructMsg(withLoc, withTb, *args):
     """
     Construct a message from these arguments.
+
+    withLoc: construct message with location info
+    withTb: construct message with traceback if an exception is the last argument
     args: the message or message components
     return: string message
     """
-    # first location in code: <file>#<line> <function>:
-    frame  = sys._getframe(2)
-    ret    = frame.f_code.co_filename
-    ret   += '#'
-    ret   += str( frame.f_lineno )
-    ret   += ' '
-    ret   += frame.f_code.co_name
-    ret   += ':'
+    if withLoc:
+        frame  = sys._getframe(2)
+        loc    = frame.f_code.co_filename
+        loc   += '#'
+        loc   += str(frame.f_lineno)
+        loc   += ' '
+        loc   += frame.f_code.co_name
+        loc   += ':'
+        ret = loc
+    else:
+        ret = ''
 
-    # then arguments
+        
     def m(a):
         if a is None:
             return '<undef>'
         if callable(a):
             return a()
+        if isinstance(a, OSError):
+            return type(a).__name__ + ' ' + str(a)
         return a
 
-    args2 = map( m, args )
-    ret += ''.join( map( lambda o: ' ' + str(o), *args2 ))
-    return ret
+    args2 = map(m, *args)
+    ret += ' '.join(map(lambda o: str(o), args2))
 
+    if withTb and len(*args) > 0:
+        *_, last = iter(*args)
+        if isinstance(last, BaseException):
+            ret += ''.join(traceback.format_exception(type(last), last, last.__traceback__))
 
-def _constructMsg( *args ):
-    """
-    Construct a message from these arguments.
-    args: the message or message components
-    return: string message
-    """
-    def m(a):
-        if a is None:
-            return '<undef>'
-        if callable(a):
-            return a()
-        return a
-
-    args2 = map( m, args )
-    ret = ' '.join( map( lambda o: str(o), *args2 ))
     return ret
 
