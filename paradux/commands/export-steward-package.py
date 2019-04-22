@@ -18,7 +18,7 @@ def run(args, settings) :
     try :
         settings.mountImage()
 
-        conf = settings.getConfiguration()
+        conf = settings.getStewardsConfiguration()
 
         # stdout only right now
         for stewardPackage in conf.getStewardPackages():
@@ -32,13 +32,14 @@ def run(args, settings) :
     return True
 
 
-def addSubParser( parentParser, cmdName ) :
+def addSubParser(parentParser, cmdName) :
     """
     Enable this command to add its own command-line options
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Export the steward package for one or more stewards.' )
+    parser = parentParser.add_parser( cmdName, help='Export the steward packages.' )
     # FUTURE: parser.add_argument( '--paper',     action='store_const', const=True, help='Print to paper instead of USB sticks.' )
     # FUTURE: parser.add_argument( '--usbsticks', action='store_const', const=True, help='Save to USB sticks instead of printing to paper.' )
+    # FUTURE: parser.add_argument( '--steward',   action='store',                   help='Name of the steward.' )
 

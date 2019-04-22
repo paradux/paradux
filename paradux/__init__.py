@@ -13,8 +13,10 @@ import paradux.commands
 import paradux.settings
 from paradux.logging import FatalException
 import paradux.utils
+from pkg_resources import get_distribution
 import secrets
 import sys
+
 
 def run():
     """
@@ -53,7 +55,7 @@ def run():
             exit( 0 if ret == 1 else 1 )
 
         except Exception as e:
-            paradux.logging.fatal( e )
+            paradux.logging.fatal( str(type(e)), '--', e )
 
     else:
         paradux.logging.fatal('Sub-command not found:', cmdName, '. Add --help for help.' )
@@ -63,3 +65,13 @@ def run_not_implemented(args,conf):
     paradux.logging.fatal('Not implemented yet! Sorry. Want to help? https://github.com/paradux')
 
 
+def version():
+    """
+    Obtain the current paradux version
+
+    return: version string
+    """
+
+    ret = get_distribution('paradux').version
+    print( "XXX version is " + ret )
+    return ret

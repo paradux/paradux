@@ -19,7 +19,7 @@ def run(args, settings) :
     try :
         settings.createAndMountImage()
 
-        settings.initConfiguration()
+        settings.init(args.min_stewards)
 
     finally:
         settings.cleanup()
@@ -28,7 +28,7 @@ def run(args, settings) :
     
 
 
-def addSubParser( parentParser, cmdName ) :
+def addSubParser(parentParser, cmdName) :
     """
     Enable this command to add its own command-line options
     parentParser: the parent argparse parser
@@ -63,8 +63,13 @@ def addSubParser( parentParser, cmdName ) :
             return ret
         else:
             raise argparse.ArgumentTypeError('Specify image size like this: 123 MiB')
+
+    def min_stewards(value):
+        if value >= 2:
+            raise argparse.ArgumentTypeError('Number of stewards must be at least 2')
             
         
     parser = parentParser.add_parser(cmdName, help='Sets up a Paradux installation for the first time.')
-    parser.add_argument('--image-size', type=valid_disk_size, default='24 M', help='Size of the LUKS disk image for secrets.')
+    parser.add_argument('--image-size',   type=valid_disk_size, default='24 M', help='Size of the LUKS disk image for secrets.')
+    parser.add_argument('--min-stewards', type=min_stewards,    default=3,      help='Number of stewards required to recover (2 or more).')
 

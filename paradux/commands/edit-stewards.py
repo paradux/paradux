@@ -15,36 +15,38 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
+
+    conf = None
     try :
         settings.mountImage()
 
-        while True:
-            if not settings.editTempConfiguration():
-                settings.abortTempConfiguration()
-                break # user abort
+        conf = settings.getStewardsConfiguration()
 
-            report = settings.checkTempConfiguration()
+        while True:
+            report = conf.editTempAndReport()
 
             if report.isAllOk():
-                settings.promoteTempConfiguration()
-                break # all fine, we are done
-
+                conf.promoteTemp()
+                break # we are done
+                
             print( report.asText() )
 
             if input( 'Continue editing? Y/N: ' ).lower() == 'n':
                 break
 
     finally:
+        if conf != None:
+            conf.abortTemp()
         settings.cleanup()
 
     return True
 
 
-def addSubParser( parentParser, cmdName ) :
+def addSubParser(parentParser, cmdName) :
     """
     Enable this command to add its own command-line options
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Modify a paradux configuration.' )
+    parser = parentParser.add_parser( cmdName, help='Edit the stewards in a paradux configuration.' )
 

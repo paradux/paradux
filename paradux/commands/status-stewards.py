@@ -18,7 +18,7 @@ def run(args, settings) :
     try :
         settings.mountImage()
 
-        conf = settings.getConfiguration()
+        conf = settings.getStewardsConfiguration()
 
         print( conf.asText() )
 
@@ -28,10 +28,10 @@ def run(args, settings) :
     return True
 
 
-def addSubParser( parentParser, cmdName ) :
+def addSubParser(parentParser, cmdName) :
     """
     Enable this command to add its own command-line options
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Print the current status of this paradux configuration.' )
+    parser = parentParser.add_parser( cmdName, help='Print the current status of the stewards ofthis paradux configuration.' )

@@ -8,11 +8,14 @@
 
 import os
 import os.path
-import paradux.configuration
+import paradux.configuration.datasets
+import paradux.configuration.stewards
+import paradux.configuration.secrets
 import paradux.logging
 import paradux.utils
 import pathlib
 import posixpath
+import random
 from shutil import copyfile
 
 
@@ -42,22 +45,26 @@ class Settings:
     directory: the paradux data directory
     """
     def __init__(self, directory, image_size) :
-        if not os.path.isdir(directory):
-            raise FileNotFoundError(directory)
-
         self.directory         = directory
         self.image_size        = image_size
+
+        self.recovery_key_size = 32 # LUKS parameter
+        self.recovery_key_slot =  7 # LUKS parameter
+        self.everyday_key_slot =  0 # LUKS parameter
 
         self.image_file        = self.directory + '/configuration.img'        # LUKS file
         self.crypt_device_name = 'paradux'                                    # short name of the device created by cryptsetup
         self.crypt_device_path = '/dev/mapper/' + self.crypt_device_name      # path name of the device created by cryptsetup
         self.image_mount_point = self.directory + '/configuration'            # mount point for the image
-        self.config_file       = self.image_mount_point + '/paradux.json'     # master configuration JSON
-        self.temp_config_file  = self.image_mount_point + '/paradux.tmp.json' # configuration JSON currently being edited
 
-        self.recovery_key_size = 32 # LUKS parameter
-        self.recovery_key_slot =  7 # LUKS parameter
-        self.everyday_key_slot =  0 # LUKS parameter
+        self.datasets_config_file      = self.image_mount_point + '/datasets.json'      # configuration JSON for datasets
+        self.temp_datasets_config_file = self.image_mount_point + '/datasets.temp.json' # being edited configuration JSON for datasets
+        self.stewards_config_file      = self.image_mount_point + '/stewards.json'      # configuration JSON for stewards
+        self.temp_stewards_config_file = self.image_mount_point + '/stewards.temp.json' # being edited configuration JSON for stewards
+        self.secrets_config_file       = self.image_mount_point + '/secrets.json'       # configuration JSON for secrets
+
+        self.datasetsConfiguration = None # allocated as needed
+        self.stewardsConfiguration = None # allocated as needed
 
 
     def createAndMountImage(self):
@@ -83,6 +90,7 @@ class Settings:
         self._image_mount()
         self._image_set_permissions()
 
+
     def mountImage(self):
         """
         Mount the LUKS image at the designated mount point
@@ -99,109 +107,55 @@ class Settings:
         self._image_mount()
 
 
-    def initConfiguration(self):
+    def init(self, min_stewards):
         """
         Initialize this configuration by creating default files inside the image.        
 
+        min_stewards: the number of stewards required to recover
         return: void
         """
 
         paradux.logging.info('Initializing configuration with defaults')
 
-        conf = paradux.configuration.default()
-        with open(self.config_file, 'w') as file:
-            file.write( conf.asJson() )
-        os.chmod(self.config_file, 0o600)
+        nbits  = 512
+        secret = random.SystemRandom().randint(0, 1<<nbits)
+
+        paradux.configuration.datasets.saveInitial(self.datasets_config_file)
+        paradux.configuration.stewards.saveInitial(self.stewards_config_file)
+        paradux.configuration.secrets.createAndSaveInitial(nbits, secret, min_stewards, self.secrets_config_file)
 
 
-    def editTempConfiguration(self):
+    def getDatasetsConfiguration(self):
         """
-        Edit the temporary config JSON file. If it does not exist yet,
-        create it from the master.
+        Obtain the current configuration of the datasets.
 
-        return: True if successful
+        return: DatasetsConfiguration
         """
-
-        paradux.logging.info('Editing temporary configuration file')
-
-        if not os.path.isfile(self.temp_config_file):
-            copyfile(self.config_file, self.temp_config_file)
-            os.chmod(self.temp_config_file, 0o600)
-
-        if 'EDITOR' in os.environ:
-            editor = os.environ['EDITOR']
-            if paradux.utils.myexec(editor + " '" + self.temp_config_file + "'"):
-                paradux.logging.fatal('editing file failed')
-
-            return True
-
-        else:
-            paradux.logging.error('No EDITOR environment variable set. Cannot edit file.')
-        
-        return False
+        if self.datasetsConfiguration == None:
+            self.datasetsConfiguration = paradux.configuration.datasets.createFromFile( self.datasets_config_file, self.temp_datasets_config_file )
+        return self.datasetsConfiguration
 
 
-    def abortTempConfiguration(self):
+    def getStewardsConfiguration(self):
         """
-        Abort the editing of temporary config JSON file.
+        Obtain the current configuration of the stewards.
 
-        return: void
+        return: StewardsConfiguration
         """
-
-        paradux.logging.info('Aborting edit of temporary configuration file')
-
-        if os.path.isfile(self.temp_config_file):
-            paradux.logging.trace('Deleting:', self.temp_config_file)
-            os.remove(self.temp_config_file)
-
-        else:
-            paradux.logging.trace('No need to delete, does not exist:', self.temp_config_file)
+        if self.stewardsConfiguration == None:
+            self.stewardsConfiguration = paradux.configuration.stewards.createFromFile( self.stewards_config_file, self.temp_stewards_config_file )
+        return self.stewardsConfiguration
 
 
-    def checkTempConfiguration(self):
+    def getSecretsConfiguration(self):
         """
-        Run checks on the temporary config JSON file, and return a report.
+        Obtain the current configuration of the secrets.
 
-        return: ConfigurationReport
+        return: SecretsConfiguration
         """
-
-        paradux.logging.info('Checking temporary configuration file')
-
-        # create report
-        # if no temp config JSON file exists, return empty report
-        paradux.logging.trace('file exists?', self.temp_config_file)
-        if os.path.isfile(self.temp_config_file):
-            return paradux.configuration.analyze_json(self.temp_config_file)
-        else:
-            return ConfigurationReport()
-
-
-    def promoteTempConfiguration(self):
-        """
-        Promote the temporary config JSON file to master. This presupposes
-        that the temporary config JSON is valid.
-
-        return: void
-        """
-
-        paradux.logging.info('Promoting temporary configuration file')
-
-        # if temp config JSON file exists, move it to config JSON file
-        paradux.logging.trace('file exists?', self.temp_config_file)
-        if os.path.isfile(self.temp_config_file):
-            paradux.logging.trace('promoting', self.temp_config_file, '->', self.config_file)
-            os.replace(self.temp_config_file, self.config_file)
-
-
-    def getConfiguration(self):
-        """
-        Obtain the current configuration from the master config JSON.
-
-        return: Configuration object
-        """
-
-        ret = paradux.configuration.parse_json(self.config_file)
-        return ret
+        if self.secretsConfiguration == None:
+            self.secretsConfiguration = paradux.configuration.secrets.createFromFile( self.secrets_config_file )
+        return self.secretsConfiguration
 
 
     def cleanup(self):
@@ -258,7 +212,8 @@ class Settings:
         print("""
 Please set your everyday passphrase for paradux.
 Make sure this passphrase is long, hard to guess, and DO NOT write it down anywhere.
-If you lose it, paradux lets you recover with the help of your stewards.
+If you lose it, paradux lets you recover with the help of your stewards, once you
+have set those up.
 """)
 
         if paradux.utils.myexec(
@@ -289,7 +244,7 @@ If you lose it, paradux lets you recover with the help of your stewards.
         paradux.logging.trace('mount path exists?', self.image_mount_point)
         if not os.path.isdir(self.image_mount_point):
             paradux.logging.trace('creating path to mount point', self.image_mount_point)
-            os.makedirs(self.image_mount_point, mode=700)
+            os.makedirs(self.image_mount_point, mode=0o700)
 
         if paradux.utils.myexec("sudo mount '" + self.crypt_device_path + "' '" + self.image_mount_point + "'"):
             paradux.logging.fatal('mount failed')

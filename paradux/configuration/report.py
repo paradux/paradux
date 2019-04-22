@@ -1,7 +1,5 @@
 #!/usr/bin/python
 #
-# Collects the settings for this instance of paradux
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
@@ -9,6 +7,10 @@
 from enum import Enum
 
 class Level(Enum):
+    """
+    Defines the level of item in a report
+    """
+
     ERROR   = ( 1, 'ERROR'   )
     WARNING = ( 2, 'WARNING' )
     NOTICE  = ( 3, 'NOTICE'  )
@@ -21,9 +23,9 @@ class Level(Enum):
         return self.myname
 
 
-class ConfigurationReportItem:
+class ReportItem:
     """
-    A single item in a ConfigurationReport.
+    A single item in a Report.
     """
     def __init__(self, level, message):
         """
@@ -31,7 +33,7 @@ class ConfigurationReportItem:
 
         level: the level of the item
         message: the message
-    """
+        """
         self.level   = level
         self.message = message
 
@@ -45,7 +47,7 @@ class ConfigurationReportItem:
         return "{0:7s}: {1:s}".format(self.level,self.message)
         
 
-class ConfigurationReport:
+class Report:
     """
     The set of errors and warnings created by analyzing a (potential)
     Configuration.
@@ -56,6 +58,11 @@ class ConfigurationReport:
 
 
     def isAllOk(self):
+        """
+        Return True if this report reports no issues.
+
+        return: True or False
+        """
         return len(self.reportItems) == 0
 
 
