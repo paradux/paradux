@@ -6,6 +6,7 @@
 
 import argparse
 import paradux
+import random
 import re
 
 
@@ -17,9 +18,12 @@ def run(args, settings) :
     settings: settings for this paradux instance
     """
     try :
-        settings.createAndMountImage()
+        nbits  = 512
+        recoverySecret = random.SystemRandom().randint(0, 1<<nbits)
 
-        settings.init(args.min_stewards)
+        settings.createAndMountImage(recoverySecret)
+
+        settings.populateWithInitialData(args.min_stewards, nbits, recoverySecret)
 
     finally:
         settings.cleanup()

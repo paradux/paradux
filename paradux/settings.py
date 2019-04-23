@@ -9,14 +9,17 @@
 import os
 import os.path
 import paradux.configuration.datasets
-import paradux.configuration.stewards
 import paradux.configuration.secrets
+import paradux.configuration.stewards
+import paradux.configuration.user
 import paradux.logging
 import paradux.utils
 import pathlib
 import posixpath
 import random
+import re
 import shutil
+import threading
 
 
 # Default paradux data directory
@@ -61,17 +64,24 @@ class Settings:
         self.temp_datasets_config_file = self.image_mount_point + '/datasets.temp.json' # being edited configuration JSON for datasets
         self.stewards_config_file      = self.image_mount_point + '/stewards.json'      # configuration JSON for stewards
         self.temp_stewards_config_file = self.image_mount_point + '/stewards.temp.json' # being edited configuration JSON for stewards
+        self.user_config_file          = self.image_mount_point + '/user.json'          # configuration JSON for user info
+        self.temp_user_config_file     = self.image_mount_point + '/user.tmp.json'      # being edited configuration JSON for user info
         self.secrets_config_file       = self.image_mount_point + '/secrets.json'       # configuration JSON for secrets
+
+        self.key_fifo = '/tmp/' + str(random.SystemRandom().randint(0, 1<<32)) # used to pipe a secret into cryptsetup
 
         self.datasetsConfiguration = None # allocated as needed
         self.stewardsConfiguration = None # allocated as needed
+        self.userConfiguration     = None # allocated as needed
+        self.secretsConfiguration  = None # allocated as needed
 
 
-    def createAndMountImage(self):
+    def createAndMountImage(self, recoverySecret):
         """
         Create the initial LUKS image and mounts it. This does not initialize anything
         inside the image.
 
+        recoverySecret: the recovery secret
         return: void
         throws: exception if the image exists already
         """
@@ -84,7 +94,7 @@ class Settings:
         if self._cryptsetup_isopen():
             raise FileExistsError(self.crypt_device_path)
             
-        self._image_create()
+        self._image_create(recoverySecret)
         self._cryptsetup_open()
         self._image_format()
         self._image_mount()
@@ -107,22 +117,22 @@ class Settings:
         self._image_mount()
 
 
-    def init(self, min_stewards):
+    def populateWithInitialData(self, min_stewards, nbits, recoverySecret):
         """
         Initialize this configuration by creating default files inside the image.        
 
         min_stewards: the number of stewards required to recover
+        nbit: length of the recovery secret
+        recoverySecret: the secret for recovery
         return: void
         """
 
-        paradux.logging.info('Initializing configuration with defaults')
-
-        nbits  = 512
-        secret = random.SystemRandom().randint(0, 1<<nbits)
+        paradux.logging.info('Populating with initial default data')
 
         paradux.configuration.datasets.saveInitial(self.datasets_config_file)
         paradux.configuration.stewards.saveInitial(self.stewards_config_file)
-        paradux.configuration.secrets.createAndSaveInitial(nbits, secret, min_stewards, self.secrets_config_file)
+        paradux.configuration.user.saveInitial(self.user_config_file)
+        paradux.configuration.secrets.createAndSaveInitial(nbits, recoverySecret, min_stewards, self.secrets_config_file)
 
 
     def getDatasetsConfiguration(self):
@@ -147,6 +157,17 @@ class Settings:
         return self.stewardsConfiguration
 
 
+    def getUserConfiguration(self):
+        """
+        Obtain the current configuration of the paradux user.
+
+        return: UserConfiguration
+        """
+        if self.userConfiguration == None:
+            self.userConfiguration = paradux.configuration.user.createFromFile( self.user_config_file, self.temp_user_config_file )
+        return self.userConfiguration
+
+
     def getSecretsConfiguration(self):
         """
         Obtain the current configuration of the secrets.
@@ -158,14 +179,53 @@ class Settings:
         return self.secretsConfiguration
 
 
+    def getStewardPackages(self):
+        """
+        Obtain a list of StewardPackage ready for export.
+
+        return: list
+        """
+        # ret = map( lambda sp : StewardPackage(, self.stewardInfos )
+        # return ret
+
+
+    def hasEverydayPassphrase(self, imageFile=None):
+        """
+        Has the image the everyday passphrase set
+
+        imageFile: name of the image file, or defaults to self.image_file
+        """
+        if imageFile is None:
+            imageFile = self.image_file
+
+        usedSlots = self._cryptsetup_used_keyslots(imageFile)
+        return self.everyday_key_slot in usedSlots
+
+
+    def hasRecoverySecret(self, imageFile=None):
+        """
+        Has the image the recovery secret set
+
+        imageFile: name of the image file, or defaults to self.image_file
+        """
+        if imageFile is None:
+            imageFile = self.image_file
+
+        usedSlots = self._cryptsetup_used_keyslots(imageFile)
+        return self.recovery_key_slot in usedSlots
+
+
     def exportAll(self,exportFile):
         """
-        Export the image to the named file, stripping the everyday password.
+        Export the image to the named file, stripping the everyday passphrase.
 
         exportFile: the file to export to
         """
         if os.path.isfile(exportFile):
             raise FileExistsError(exportFile)
+
+        if not self.hasRecoverySecret():
+            paradux.logging.fatal('No recovery secret has been set. Cannot export.')
 
         shutil.copyfile(self.image_file, exportFile)
         os.chmod(exportFile, 0o600)
@@ -177,7 +237,13 @@ class Settings:
                 + " " + str(self.everyday_key_slot)):
             paradux.logging.fatal('cryptsetup luksKillSlot failed')
 
-        paradux.logging.info( 'Exported file without everyday password:', exportFile )
+        if self.hasEverydayPassphrase(exportFile):
+            paradux.logging.fatal('Export failed: everyday passphrase has not been removed.')
+
+        if not self.hasRecoverySecret(exportFile):
+            paradux.logging.fatal('Export failed: no recovery secret has been set.')
+
+        paradux.logging.info( 'Exported file without everyday passphrase:', exportFile )
 
         
     def cleanup(self):
@@ -207,10 +273,11 @@ class Settings:
         return os.path.isfile(self.image_file)
 
 
-    def _image_create(self):
+    def _image_create(self, recoverySecret):
         """
         Create the image file
 
+        recoverySecret: the recovery secret
         return: void
         """
         image_dir = os.path.dirname(self.image_file)
@@ -222,14 +289,38 @@ class Settings:
             paradux.logging.trace('creating file', self.image_file, 'of size', self.image_size)
             file.truncate(self.image_size)
 
-#        if paradux.utils.myexec(
-#                  'cryptsetup luksFormat'
-#                + ' --batch-mode'
-#                + ' --key-slot=' + str(self.recovery_key_slot)
-#                + ' --key-file=-' # read from stdin
-#                + " '" + self.image_file + "'",
-#                recovery_secret):
-#            paradux.logging.fatal('cryptsetup luksFormat failed')
+        recoveryPassphrase = _secretToPassphrase(recoverySecret)
+
+        if paradux.utils.myexec(
+                  'cryptsetup luksFormat'
+                + ' --batch-mode'
+                + ' --key-slot=' + str(self.recovery_key_slot)
+                + ' --key-file=-' # read from stdin
+                + " '" + self.image_file + "'",
+                recoveryPassphrase ):
+            paradux.logging.fatal('cryptsetup luksFormat failed')
+
+        # Adding a second key requires that the previous key is provided.
+        # Reading both from stdin does not seem to work.
+        # We don't want to save either of those to disk.
+        # So we create a named pipe, and pipe to it on a different thread, yay!
+
+        os.mkfifo(self.key_fifo, 0o600)
+
+        class Piper(threading.Thread):
+            def __init__(self,fileName, content):
+                super().__init__()
+                self.fileName = fileName
+                self.content  = content
+
+            def run(self):
+                with open(self.fileName, "wb") as file:
+                    file.write(self.content)
+                
+
+        piper = Piper(self.key_fifo, recoveryPassphrase)
+        piper.start()
+
 
         print("""
 Please set your everyday passphrase for paradux.
@@ -239,12 +330,15 @@ have set those up.
 """)
 
         if paradux.utils.myexec(
-                  'cryptsetup luksFormat'
+                  'cryptsetup luksAddKey'
                 + ' --batch-mode'
                 + ' --key-slot=' + str(self.everyday_key_slot)
-                + ' --key-file=-' # read from stdin
+                + ' --key-file=' + self.key_fifo
                 + " '" + self.image_file + "'" ):
             paradux.logging.fatal('cryptsetup luksAddKey failed')
+
+        piper.join()
+        os.remove(self.key_fifo)
 
 
     def _image_format(self):
@@ -340,4 +434,54 @@ Enter your everyday passphrase.
         """
         if paradux.utils.myexec("sudo cryptsetup close '" + self.crypt_device_name + "'"):
             paradux.logging.fatal('cryptsetup close failed')
+
+
+    def _cryptsetup_used_keyslots(self, imageFile):
+        """
+        Determine which LUKS key slots are currently in use.
+
+        imageFile: name of the image file to test
+        return: dict of key slot number to True
+        """
+        (status,out,err) = paradux.utils.myexec("cryptsetup luksDump '" + imageFile + "'", None, True )
+        if status:
+            paradux.logging.fatal('cryptsetup luksDump failed')
+
+        inKeyslots = False
+        ret        = {}
+        for line in out.decode('utf8').splitlines():
+            if re.match(r'^\S+', line):
+                inKeyslots = line.startswith('Keyslots:')
+            elif inKeyslots:
+                m = re.match(r'^\s*(\d+):', line)
+                if m:
+                    ret[int(m.group(1))] = True
+        return ret
+
+
+def _secretToPassphrase(secret):
+    """
+    Convert an integer (used as secret for Shamir) to a passphrase for
+    cryptsetup. Use only 7bit ASCII. Cryptsetup supports up to 512 chars.
+    Just to be extra safe, we use the range from 32 (space, inclusive)
+    through 127 (DEL, exclusive).
+
+    Note: if you change this algorithm, you will break everybody's
+    recovery!
+
+    secret: the integer secret
+    return: passphrase, as a bytes-like object
+    """
+    minC =  32
+    maxC = 127
+    dC   = maxC - minC
+
+    ret = ''
+    for i in range(512):
+        if secret == 0:
+            break
+        c = ( secret % dC ) + minC
+        ret += chr(c)
+        secret = secret // dC
+    return bytes(ret, encoding="utf-8")
 

@@ -16,7 +16,11 @@ def run(args, settings) :
     settings: settings for this paradux instance
     """
     try :
-        settings.exportAll(args.file)
+        settings.mountImage()
+
+        conf = settings.getUserConfiguration()
+
+        print( conf.asText() )
 
     finally:
         settings.cleanup()
@@ -30,6 +34,4 @@ def addSubParser(parentParser, cmdName) :
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Export the datasets.' )
-    parser.add_argument( '--file', action='store', required=True, help='The file to export to.' )
-
+    parser = parentParser.add_parser( cmdName, help='Print the current status of the user of this paradux configuration.' )

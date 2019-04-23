@@ -6,6 +6,7 @@
 
 import argparse
 import paradux
+import paradux.utils
 
 
 def run(args, settings) :
@@ -18,13 +19,21 @@ def run(args, settings) :
     try :
         settings.mountImage()
 
-        conf = settings.getStewardsConfiguration()
+        stewardPackages = settings.getStewardPackages()
 
         # stdout only right now
-        for stewardPackage in conf.getStewardPackages():
-            print("=== Steward Package start === CUT HERE ===")
-            print(stewardPackage.asText())
-            print("=== Steward Package end === CUT HERE ===")
+        if args.json:
+            j = []
+            for stewardPackage in stewardPackages:
+                j.append(stewardsPackage.asJson())
+            paradux.utils.writeJsonToStdout(j)
+
+        else:
+            print( "\n=== CUT HERE ===\n".join(
+                    map(lambda t : "--- Steward Package start ---\n"
+                                   + t
+                                   + "--- Steward Package end ---\n",
+                        stewardPackages)))
 
     finally:
         settings.cleanup()
@@ -39,6 +48,7 @@ def addSubParser(parentParser, cmdName) :
     cmdName: name of this command
     """
     parser = parentParser.add_parser( cmdName, help='Export the steward packages.' )
+    parser.add_argument( '--json',     action='store_const', const=True, help='Export JSON instead of plain text.' )
     # FUTURE: parser.add_argument( '--paper',     action='store_const', const=True, help='Print to paper instead of USB sticks.' )
     # FUTURE: parser.add_argument( '--usbsticks', action='store_const', const=True, help='Save to USB sticks instead of printing to paper.' )
     # FUTURE: parser.add_argument( '--steward',   action='store',                   help='Name of the steward.' )

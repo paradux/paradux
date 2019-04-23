@@ -12,6 +12,7 @@ import os
 import pkgutil
 import paradux.logging
 import re
+import sys
 import subprocess
 import time
 
@@ -29,13 +30,15 @@ def findSubmodules(package) :
     return ret
 
 
-def myexec(cmd,stdin=None):
+def myexec(cmd,stdin=None, captureStdout=False, captureStderr=False):
     """
     Wrapper around executing sub-commands, so we can log what is happening.
 
     cmd: the command to be executed by the shell
     stdin: content to be piped into the command, if any
-    return: return code
+    captureStdout: if true, capture the commands stdout and return 
+    captureStderr: if true, capture the commands stderr and return 
+    return: if no capture: return code; otherwise tuple
     """
     if stdin == None:
         paradux.logging.debugAndSuspend('myexec:', cmd)
@@ -43,8 +46,19 @@ def myexec(cmd,stdin=None):
         paradux.logging.debugAndSuspend('myexec:', cmd, 'with stdin:', stdin)
     paradux.logging.trace(cmd, 'None' if stdin==None else len(stdin))
 
-    ret = subprocess.run(cmd, shell=True, input=stdin)
-    return ret.returncode
+    ret = subprocess.run(
+            cmd,
+            shell=True,
+            input=stdin,
+            stdout=subprocess.PIPE if captureStdout else None,
+            stderr=subprocess.PIPE if captureStderr else None)
+
+    if captureStdout or captureStderr:
+        return (ret.returncode,
+                ret.stdout if hasattr(ret, 'stdout') else None,
+                ret.stderr if hasattr(ret, 'stderr') else None )
+    else:
+        return ret.returncode
 
 
 def readJsonFromFile( fileName ):
@@ -77,6 +91,15 @@ def writeJsonToFile(fileName, j, mode=None ) :
 
     if mode != None:
         os.chmod(fileName, mode)
+
+
+def writeJsonToStdout(j) :
+    """
+    Write JSON to stdout.
+
+    j: the JSON object to write
+    """
+    json.dump(j, sys.out, indent=4, sort_keys=True)
 
 
 def saveFile(fileName, content, mode=None) :

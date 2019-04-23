@@ -58,3 +58,16 @@ class AwsApiCredentials(Credentials):
         self.apiKey       = apiKey
         self.secretApiKey = secretApiKey
 
+
+
+def parseCredentialsJson(j):
+    """
+    Helper function to parse a JSON credentials definition into an instance
+    of the right subclass of Credentials.
+
+    j: JSON fragment
+    return: instance of a subclass of Credentials
+    """
+    # FIXME
+    return None
+

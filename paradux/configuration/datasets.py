@@ -6,6 +6,7 @@
 
 from paradux.configuration import Configuration
 from paradux.configuration.report import Level, Report, ReportItem
+import paradux.data.dataset
 import paradux.utils
 
 
@@ -31,177 +32,14 @@ def createFromFile(masterFile, tmpFile):
     """
     j = paradux.utils.readJsonFromFile(masterFile)
 
-    datasets = _parseDatasetsJson(j)
-
-    return DatasetsConfiguration(masterFile, tmpFile, datasets)
-
-
-def analyze_json(filename):
-    """
-    Analyze a potential configuration JSON file and return a
-    ConfigurationReport object.
-
-    filename: name of the JSON file to parse
-    return: the ConfigurationReport object
-    """
-    items = []
-
-    with open(filename, 'r') as file:
-        jsonText = file.read()
-
-    withoutComments = re.sub(r'(?<!\\)#.*', '', jsonText)
-    j = json.loads(withoutComments)
-
-    items.append( ConfigurationReportItem( Level.NOTICE, "Hi mom" ))
-
-    return ConfigurationReport(items)
-    
-
-def _parseDatasetsJson(j):
-    """
-    Helper function to parse a JSON fragment into an array of Dataset
-
-    j: JSON fragment
-    return: array of Dataset
-    """
     datasets = []
 
     for datasetJ in j['datasets']:
-        dataset = _parseDatasetJson(datasetJ)
+        dataset = paradux.data.dataset.parseDatasetJson(datasetJ)
         datasets.append(dataset)
 
-    return datasets
-
-
-def _parseDatasetJson(j):
-    """
-    Helper function to parse a JSON dataset definition into an instance of Dataset
-
-    j: JSON fragment
-    return: instance of Dataset
-    """
-    name        = j['name']        # required
-    description = j['description'] if 'description' in j else None
-    sourceJ     = j['source']      # required
-
-    source       = _parseSourceDataLocationJson(sourceJ)
-    destinations = []
-
-    if 'destinations' in j:
-        for destinationJ in j['destinations']:
-            destination = _parseDestinationDataLocationJson(destinationJ)
-            destinations.append(destination)
-
-    return Dataset(name,description,source,destinations)
-
-
-def _parseSourceDataLocationJson(j):
-    """
-    Helper function to parse a JSON source data location definition into an instance
-    of SourceDataLocation
-
-    j: JSON fragment
-    return: instance of SourceDataLocation
-    """
-    name        = j['name']        if 'name'        in j else None
-    description = j['description'] if 'description' in j else None
-    url         = j['url']         # required
-    credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
-
-    return SourceDataLocation(name, description, url, credentials)
-
-
-def _parseDestinationDataLocationJson(j):
-    """
-    Helper function to parse a JSON destination data location definition into an
-    instance of DestinationDataLocation
-
-    j: JSON fragment
-    return: instance of DestinationDataLocation
-    """
-    name        = j['name']        # required
-    description = j['description'] if 'description' in j else None
-    url         = j['url']         # required
-    credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
-    frequency   = _parseFrequencyJson(  j['frequency']  ) if 'frequency'   in j else None
-    encryption  = _parseEncryptionJson( j['encryption'] ) if 'encryption'  in j else None
-
-    return DestinationDataLocation(name, description, url, credentials, frequency, encryption)
-
-
-def _parseCredentialsJson(j):
-    """
-    Helper function to parse a JSON credentials definition into an instance
-    of the right subclass of Credentials.
-
-    j: JSON fragment
-    return: instance of a subclass of Credentials
-    """
-    # FIXME
-    return None
-
-def _parseFrequencyJson(j):
-    # FIXME
-    return None
-
-
-def _parseEncryptionJson(j):
-    # FIXME
-    return None
+    return DatasetsConfiguration(masterFile, tmpFile, datasets)
     
-
-class DataLocation:
-    """
-    Represents the location of a bunch of data somewhere.
-
-    name: name used to refer to it within paradux (required)
-    description: text that reminds the user about this data location (optional)
-    url: how to access this data location (required)
-    credentials: access credentials (optional)
-    """
-    def __init__(self, name, description, url, credentials):
-        self.name        = name
-        self.description = description
-        self.url         = url
-        self.credentials = credentials
-
-
-class SourceDataLocation(DataLocation):
-    """
-    A DataLocation that is used as a source in a Dataset.
-    """
-    def __init__(self, name, description, url, credentials):
-        super().__init__(name, description, url, credentials)
-
-
-
-class DestinationDataLocation(DataLocation):
-    """
-    A DataLocation that is used as a destination in a Dataset.
-    """
-    def __init__(self, name, description, url, credentials, frequency, encryption_info):
-        super().__init__(name, description, url, credentials, frequency, encryption_info )
-
-
-
-class Dataset:
-    """
-    Encapsulates everything there's to be said about a Dataset.
-    """
-    def __init__(self, name, description, source, destinations):
-        """
-        Constructor.
-
-        name: the name of this Dataset
-        description: any description for this Dataset
-        source: the sourceDataLocation for this Dataset
-        destinations: the array of DestinationDataLocation for this Dataset
-        """
-        self.name         = name
-        self.description  = description
-        self.source       = source
-        self.destinations = destinations
-        
 
 class DatasetsConfiguration(Configuration):
     """
@@ -225,7 +63,9 @@ class DatasetsConfiguration(Configuration):
         reportItems = []
         try :
             j = paradux.utils.readJsonFromFile(fileName)
-            datasets = _parseDatasetsJson(j)
+            for datasetJ in j['datasets']:
+                paradux.data.dataset.parseDatasetJson(datasetJ)
+
         except Exception as e:
             reportItems.append(ReportItem(Level.ERROR, str(type(e)) + ': ' + str(e)))
 

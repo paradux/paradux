@@ -103,23 +103,3 @@ class Configuration:
 
         else:
             paradux.logging.trace('No need to delete, does not exist:', self.tmpFile)
-
-
-    def checkTempConfiguration(self):
-        """
-        Run checks on the temporary config JSON file, and return a report.
-
-        return: ConfigurationReport
-        """
-
-        paradux.logging.info('Checking temporary configuration file')
-
-        # create report
-        # if no temp config JSON file exists, return empty report
-        paradux.logging.trace('file exists?', self.tmpFile)
-        if os.path.isfile(self.tmpFile):
-            return paradux.configuration.analyze_json(self.tmpFile)
-        else:
-            return ConfigurationReport()
-
-
