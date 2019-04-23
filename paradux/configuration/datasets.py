@@ -5,6 +5,7 @@
 #
 
 from paradux.configuration import Configuration
+from paradux.configuration.report import Level, Report, ReportItem
 import paradux.utils
 
 
@@ -80,7 +81,7 @@ def _parseDatasetJson(j):
     return: instance of Dataset
     """
     name        = j['name']        # required
-    description = j['description'] if 'description' in datasetJ else None
+    description = j['description'] if 'description' in j else None
     sourceJ     = j['source']      # required
 
     source       = _parseSourceDataLocationJson(sourceJ)
@@ -102,7 +103,7 @@ def _parseSourceDataLocationJson(j):
     j: JSON fragment
     return: instance of SourceDataLocation
     """
-    name        = j['name']        # required
+    name        = j['name']        if 'name'        in j else None
     description = j['description'] if 'description' in j else None
     url         = j['url']         # required
     credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
@@ -216,7 +217,7 @@ class DatasetsConfiguration(Configuration):
         self.datasets = datasets
 
 
-    def createReport(fileName):
+    def createReport(self,fileName):
         """
         Overrides
         """
@@ -226,9 +227,9 @@ class DatasetsConfiguration(Configuration):
             j = paradux.utils.readJsonFromFile(fileName)
             datasets = _parseDatasetsJson(j)
         except Exception as e:
-            reportItems.append( ReportItem( Level.ERROR, e ))
-            
-        return Report(exportItems)
+            reportItems.append(ReportItem(Level.ERROR, str(type(e)) + ': ' + str(e)))
+
+        return Report(reportItems)
 
 
     def asText(self):
@@ -241,15 +242,15 @@ class DatasetsConfiguration(Configuration):
             t = """You currently have 0 datasets configured. To configure some, run 'paradux edit-datasets'\n"""
 
         else:
-            t = """You currently have {0,d} dataset(s) configured. They are:""".format(len(self.datasets))
+            t = "You currently have {0:d} dataset(s) configured. They are:\n".format(len(self.datasets))
             for dataset in self.datasets:
-                t.append( "* name:        %s\n").format( dataset.name )
+                t += "* name:         {0:s}\n".format(dataset.name)
                 if dataset.description != None:
-                    t.append( " description:  %s\n").format( dataset.description )
-                if dataset.source != None:
-                    t.append( " source:       %s\n").format( dataset.source.url )
+                    t += "  description:  {0:s}\n".format(dataset.description)
+                if dataset.source is not None:
+                    t += "  source:       {0:s}\n".format(dataset.source.url)
                 for destination in dataset.destinations:
-                    t.append( " destination:  %s\n").format( destination.url )
+                    t += "  destination:  {0:s}\n".format(destination.url)
 
         return t
         

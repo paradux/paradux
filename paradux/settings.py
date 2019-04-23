@@ -16,7 +16,7 @@ import paradux.utils
 import pathlib
 import posixpath
 import random
-from shutil import copyfile
+import shutil
 
 
 # Default paradux data directory
@@ -158,6 +158,28 @@ class Settings:
         return self.secretsConfiguration
 
 
+    def exportAll(self,exportFile):
+        """
+        Export the image to the named file, stripping the everyday password.
+
+        exportFile: the file to export to
+        """
+        if os.path.isfile(exportFile):
+            raise FileExistsError(exportFile)
+
+        shutil.copyfile(self.image_file, exportFile)
+        os.chmod(exportFile, 0o600)
+
+        if paradux.utils.myexec(
+                  'cryptsetup luksKillSlot'
+                + ' --batch-mode'
+                + " '" + exportFile + "'"
+                + " " + str(self.everyday_key_slot)):
+            paradux.logging.fatal('cryptsetup luksKillSlot failed')
+
+        paradux.logging.info( 'Exported file without everyday password:', exportFile )
+
+        
     def cleanup(self):
         """
         Do whatever necessary to clean up and make private data

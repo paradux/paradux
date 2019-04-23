@@ -21,9 +21,13 @@ def run(args, settings) :
         settings.mountImage()
 
         conf = settings.getStewardsConfiguration()
+        if args.clean:
+            conf.abortTempConfiguration()
 
         while True:
             report = conf.editTempAndReport()
+            if report == None:
+                break # editing failed
 
             if report.isAllOk():
                 conf.promoteTemp()
@@ -35,8 +39,6 @@ def run(args, settings) :
                 break
 
     finally:
-        if conf != None:
-            conf.abortTemp()
         settings.cleanup()
 
     return True
@@ -49,4 +51,4 @@ def addSubParser(parentParser, cmdName) :
     cmdName: name of this command
     """
     parser = parentParser.add_parser( cmdName, help='Edit the stewards in a paradux configuration.' )
-
+    parser.add_argument('--clean', action='store_const', const=True, help='Abandon previous edits and start from current configuration')

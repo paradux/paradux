@@ -8,6 +8,8 @@ import abc
 import os
 from paradux.configuration.report import Level, Report, ReportItem
 import paradux.logging
+import shutil
+
 
 class Configuration:
     """
@@ -35,7 +37,7 @@ class Configuration:
         paradux.logging.info('Editing temporary configuration file:', self.tmpFile)
 
         if not os.path.isfile(self.tmpFile):
-            copyfile(self.masterFile, self.tmpFile)
+            shutil.copyfile(self.masterFile, self.tmpFile)
             os.chmod(self.tmpFile, 0o600)
 
         if 'EDITOR' in os.environ:
@@ -51,7 +53,7 @@ class Configuration:
 
 
     @abc.abstractmethod
-    def createReport(fileName):
+    def createReport(self, fileName):
         """
         Create a report for a candidate config file.
 
@@ -80,26 +82,10 @@ class Configuration:
         paradux.logging.info('Promoting temporary configuration file')
 
         # if temp config JSON file exists, move it to config JSON file
-        paradux.logging.trace('file exists?', self.temp_config_file)
-        if os.path.isfile(self.temp_config_file):
-            paradux.logging.trace('promoting', self.temp_config_file, '->', self.config_file)
-            os.replace(self.temp_config_file, self.config_file)
-
-
-
-
-    def abortTemp(self):
-        """
-        Abandon the current temporary Configuration.
-
-        return void.
-        """
-        pass
-
-
-
-
-
+        paradux.logging.trace('file exists?', self.tmpFile)
+        if os.path.isfile(self.tmpFile):
+            paradux.logging.trace('promoting', self.tmpFile, '->', self.masterFile)
+            os.replace(self.tmpFile, self.masterFile)
 
 
     def abortTempConfiguration(self):
@@ -111,12 +97,12 @@ class Configuration:
 
         paradux.logging.info('Aborting edit of temporary configuration file')
 
-        if os.path.isfile(self.temp_config_file):
-            paradux.logging.trace('Deleting:', self.temp_config_file)
-            os.remove(self.temp_config_file)
+        if os.path.isfile(self.tmpFile):
+            paradux.logging.trace('Deleting:', self.tmpFile)
+            os.remove(self.tmpFile)
 
         else:
-            paradux.logging.trace('No need to delete, does not exist:', self.temp_config_file)
+            paradux.logging.trace('No need to delete, does not exist:', self.tmpFile)
 
 
     def checkTempConfiguration(self):
@@ -130,9 +116,9 @@ class Configuration:
 
         # create report
         # if no temp config JSON file exists, return empty report
-        paradux.logging.trace('file exists?', self.temp_config_file)
-        if os.path.isfile(self.temp_config_file):
-            return paradux.configuration.analyze_json(self.temp_config_file)
+        paradux.logging.trace('file exists?', self.tmpFile)
+        if os.path.isfile(self.tmpFile):
+            return paradux.configuration.analyze_json(self.tmpFile)
         else:
             return ConfigurationReport()
 

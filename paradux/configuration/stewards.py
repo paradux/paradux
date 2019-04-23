@@ -6,6 +6,7 @@
 
 import paradux
 from paradux.configuration import Configuration
+from paradux.configuration.report import Level, Report, ReportItem
 import paradux.utils
 
 
@@ -108,7 +109,7 @@ class StewardsConfiguration(Configuration):
         self.stewardInfos = stewardInfos
 
 
-    def createReport(fileName):
+    def createReport(self,fileName):
         """
         Overrides
         """
@@ -118,9 +119,9 @@ class StewardsConfiguration(Configuration):
             j = paradux.utils.readJsonFromFile(fileName)
             datasets = _parseStewardsJson(j)
         except Exception as e:
-            reportItems.append( ReportItem( Level.ERROR, e ))
+            reportItems.append(ReportItem(Level.ERROR, str(type(e)) + ': ' + str(e)))
             
-        return Report(exportItems)
+        return Report(reportItems)
 
 
     def asText(self):
@@ -133,17 +134,17 @@ class StewardsConfiguration(Configuration):
             t = """You currently have 0 stewards configured. To configure some, run 'paradux edit-stewards'\n"""
 
         else:
-            t = """You currently have {0,d} steward(s) configured. They are:""".format(len(self.stewardInfos))
+            t = "You currently have {0:d} steward(s) configured. They are:\n".format(len(self.stewardInfos))
             for stewardInfo in self.stewardInfos:
-                t.append( "* name:        %s\n").format( stewardInfo.name )
+                t += "* name:         {0:s}\n".format(stewardInfo.name)
                 if stewardInfo.address != None:
-                    t.append( " address:      %s\n").format( stewardInfo.address )
+                    t += "  address:      {0:s}\n".format(stewardInfo.address)
                 if stewardInfo.contactEmail != None:
-                    t.append( " contactEmail: %s\n").format( stewardInfo.contactEmail )
+                    t += "  contactEmail: {0:s}\n".format(stewardInfo.contactEmail)
                 if stewardInfo.contactPhone != None:
-                    t.append( " contactPhone: %s\n").format( stewardInfo.contactPhone )
+                    t += "  contactPhone: {0:s}\n".format(stewardInfo.contactPhone)
                 if stewardInfo.acceptedTs != None:
-                    t.append( " acceptedTs:   %s\n").format( stewardInfo.acceptedTs )
+                    t += "  acceptedTs:   {0:s}\n".format(paradux.utils.time2string(stewardInfo.acceptedTs))
 
         return t
 

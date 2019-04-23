@@ -44,7 +44,9 @@ class ReportItem:
 
         return: text string
         """
-        return "{0:7s}: {1:s}".format(self.level,self.message)
+        return self.message
+        # return str(self.level) + self.message
+        # return "{0:7s}: {1:s}".format(str(self.level), self.message)
         
 
 class Report:

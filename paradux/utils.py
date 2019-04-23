@@ -7,7 +7,6 @@
 #
 
 import calendar
-import datetime
 import json
 import os
 import pkgutil
@@ -95,26 +94,26 @@ def saveFile(fileName, content, mode=None) :
         os.chmod(fileName, mode)
 
 
-def time2string(time):
+def time2string(t):
     """
     Format time consistently
     
-    time: the time to be formatted
+    t: the time to be formatted
     return: formatted time
     """
-    ts = time.gmtime(time)
-    ret = "%.4d%.2d%.2d-%.2d%.2d%.2d".format(ts.tm_year, ts.tm_mon, ts.tm_day, ts.tm_hour, ts.tm_min, ts.tm_sec)
+    ts  = time.gmtime(t)
+    ret = time.strftime('%Y%m%d-%H%M%S', ts)
     return ret
 
 
-def string2time(time):
+def string2time(s):
     """
     Parse formatted timed consistently
 
-    time: the string produced by time2string
+    s: the string produced by time2string
     return: UNIX time
     """
-    parsed = datetime.strptime(date_str, '%Y%m%s-%H%M%S')
+    parsed = time.strptime(s, '%Y%m%d-%H%M%S')
     ret    = calendar.timegm(parsed)
     return ret
 
