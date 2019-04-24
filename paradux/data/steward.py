@@ -5,17 +5,8 @@
 #
 
 from paradux.data.person import Person
+import paradux.logging
 import paradux.utils
-
-
-class Steward(Person):
-    """
-    All information we have about and related to a Steward.
-    """
-    def __init__(self, id, name, address, contactEmail, contactPhone, acceptedTs):
-        super().__init__(name, address, contactEmail, contactPhone)
-        self.id           = id
-        self.acceptedTs   = acceptedTs
 
 
 def parseStewardJson(j):
@@ -25,7 +16,8 @@ def parseStewardJson(j):
     j: JSON fragment
     return: Steward
     """
-    id           = j['id']            # required
+    paradux.logging.trace('parseStewardJson')
+
     name         = j['name']          # required
     address      = j['address']       if 'address'       in j else None
     contactEmail = j['contact-email'] if 'contact-email' in j else None
@@ -34,5 +26,13 @@ def parseStewardJson(j):
 
     acceptedTs = paradux.utils.string2time(acceptedOn)
 
-    return Steward(id, name, address, contactEmail, contactPhone, acceptedTs)
+    return Steward(name, address, contactEmail, contactPhone, acceptedTs)
 
+
+class Steward(Person):
+    """
+    All information we have about and related to a Steward.
+    """
+    def __init__(self, name, address, contactEmail, contactPhone, acceptedTs):
+        super().__init__(name, address, contactEmail, contactPhone)
+        self.acceptedTs   = acceptedTs

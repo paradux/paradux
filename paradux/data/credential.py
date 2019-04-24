@@ -6,6 +6,23 @@
 # All rights reserved. License: see package.
 #
 
+import paradux.logging
+
+
+def parseCredentialsJson(j):
+    """
+    Helper function to parse a JSON credentials definition into an instance
+    of the right subclass of Credentials.
+
+    j: JSON fragment
+    return: instance of a subclass of Credentials
+    """
+    paradux.logging.trace('parseCredentialsJson')
+
+    # FIXME
+    return None
+
+
 class Credentials:
     """
     Abstract superclass for all types of username/password and the like
@@ -57,17 +74,4 @@ class AwsApiCredentials(Credentials):
         """
         self.apiKey       = apiKey
         self.secretApiKey = secretApiKey
-
-
-
-def parseCredentialsJson(j):
-    """
-    Helper function to parse a JSON credentials definition into an instance
-    of the right subclass of Credentials.
-
-    j: JSON fragment
-    return: instance of a subclass of Credentials
-    """
-    # FIXME
-    return None
 

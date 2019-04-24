@@ -25,15 +25,19 @@ def run(args, settings) :
         if args.json:
             j = []
             for stewardPackage in stewardPackages:
-                j.append(stewardsPackage.asJson())
+                j.append(stewardPackage.asJson())
+
             paradux.utils.writeJsonToStdout(j)
 
-        else:
-            print( "\n=== CUT HERE ===\n".join(
-                    map(lambda t : "--- Steward Package start ---\n"
-                                   + t
-                                   + "--- Steward Package end ---\n",
+        elif len(stewardPackages) > 0:
+            print( "\n=== CUT HERE ===\n\n".join(
+                    map(lambda t : "--- Steward Package start ---\n\n"
+                                   + t.asText()
+                                   + "\n--- Steward Package end ---\n",
                         stewardPackages)))
+
+        else:
+            print( "No stewards have been defined. Not exporting any packages." )
 
     finally:
         settings.cleanup()

@@ -4,6 +4,25 @@
 # All rights reserved. License: see package.
 #
 
+import paradux.logging
+
+
+def parsePersonJson(j):
+    """
+    Help function to parse a JSON fragment into an instance of Person
+
+    j: JSON fragment
+    return: Person
+    """
+    paradux.logging.trace('parsePersonJson')
+
+    name         = j['name']          # required
+    address      = j['address']       if 'address'       in j else None
+    contactEmail = j['contact-email'] if 'contact-email' in j else None
+    contactPhone = j['contact-phone'] if 'contact-phone' in j else None
+
+    return Person(name, address, contactEmail, contactPhone)
+
 
 class Person:
     """
@@ -16,17 +35,20 @@ class Person:
         self.contactPhone = contactPhone
 
 
-def parsePersonJson(j):
-    """
-    Help function to parse a JSON fragment into an instance of Person
+    def asJson(self):
+        """
+        Obtain in JSON format.
 
-    j: JSON fragment
-    return: Person
-    """
-    name         = j['name']          # required
-    address      = j['address']       if 'address'       in j else None
-    contactEmail = j['contact-email'] if 'contact-email' in j else None
-    contactPhone = j['contact-phone'] if 'contact-phone' in j else None
+        return: json
+        """
+        ret = {
+            'name' : self.name
+        }
+        if self.address is not None:
+            ret['address'] = self.address
+        if self.contactEmail is not None:
+            ret['contact-email'] = self.contactEmail
+        if self.contactPhone is not None:
+            ret['contact-phone'] = self.contactPhone
 
-    return Person(name, address, contactEmail, contactPhone)
-
+        return ret

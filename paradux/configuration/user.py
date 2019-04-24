@@ -50,6 +50,15 @@ class UserConfiguration(Configuration):
         self.user = user
 
 
+    def getUser(self):
+        """
+        Obtain the user of this paradux installation
+
+        return: the User
+        """
+        return self.user
+
+
     def createReport(self,fileName):
         """
         Overrides

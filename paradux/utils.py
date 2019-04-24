@@ -12,7 +12,6 @@ import os
 import pkgutil
 import paradux.logging
 import re
-import sys
 import subprocess
 import time
 
@@ -99,7 +98,7 @@ def writeJsonToStdout(j) :
 
     j: the JSON object to write
     """
-    json.dump(j, sys.out, indent=4, sort_keys=True)
+    print(json.dumps(j, indent=4, sort_keys=True))
 
 
 def saveFile(fileName, content, mode=None) :

@@ -35,4 +35,4 @@ def addSubParser(parentParser, cmdName) :
     parser = parentParser.add_parser( cmdName, help='Change the secret(s) for this paradux configuration.' )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--everyday', action='store_const', const=True, help='Change the everyday passphrase')
-    group.add_argument('--recovery', action='store_const', const=True, help='Change the recovery secret (requires notification of all stewards)')
+    group.add_argument('--recovery', action='store_const', const=True, help='Change the recovery secret (requires updating the info with all stewards)')

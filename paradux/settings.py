@@ -13,6 +13,7 @@ import paradux.configuration.secrets
 import paradux.configuration.stewards
 import paradux.configuration.user
 import paradux.logging
+from paradux.stewardpackage import StewardPackage
 import paradux.utils
 import pathlib
 import posixpath
@@ -85,7 +86,6 @@ class Settings:
         return: void
         throws: exception if the image exists already
         """
-
         paradux.logging.info('Creating image:', self.image_file)
 
         if self._image_exists():
@@ -107,7 +107,6 @@ class Settings:
 
         return: void
         """
-
         paradux.logging.info('Mounting image:', self.image_file)
 
         if not self._image_exists():
@@ -126,7 +125,6 @@ class Settings:
         recoverySecret: the secret for recovery
         return: void
         """
-
         paradux.logging.info('Populating with initial default data')
 
         paradux.configuration.datasets.saveInitial(self.datasets_config_file)
@@ -185,8 +183,28 @@ class Settings:
 
         return: list
         """
-        # ret = map( lambda sp : StewardPackage(, self.stewardInfos )
-        # return ret
+        paradux.logging.trace('getStewardPackages')
+
+        stewardsConf = self.getStewardsConfiguration()
+        userConf     = self.getUserConfiguration()
+        secretsConf  = self.getSecretsConfiguration()
+        version      = paradux.version()
+
+        ret       = []
+        needsSave = False
+
+        for stewardId, steward in stewardsConf.getStewards().items() :
+            stewardShare = secretsConf.getIssuedStewardShare(stewardId)
+            if stewardShare is None:
+                stewardShare = secretsConf.issueStewardShare(stewardId)
+                needsSave = True
+
+            ret.append(StewardPackage(userConf.getUser(), steward, stewardShare, secretsConf.getMersenne(), secretsConf.getMinStewards(), version))
+
+        if needsSave:
+            secretsConf.save()
+
+        return ret
 
 
     def hasEverydayPassphrase(self, imageFile=None):
@@ -195,6 +213,8 @@ class Settings:
 
         imageFile: name of the image file, or defaults to self.image_file
         """
+        paradux.logging.trace('hasEverydayPassphrase')
+
         if imageFile is None:
             imageFile = self.image_file
 
@@ -208,6 +228,8 @@ class Settings:
 
         imageFile: name of the image file, or defaults to self.image_file
         """
+        paradux.logging.trace('hasRecoverySecret')
+
         if imageFile is None:
             imageFile = self.image_file
 
@@ -221,6 +243,8 @@ class Settings:
 
         exportFile: the file to export to
         """
+        paradux.logging.info('Exporting configuration with stripped everyday secret')
+
         if os.path.isfile(exportFile):
             raise FileExistsError(exportFile)
 
@@ -253,7 +277,6 @@ class Settings:
 
         return: void
         """
-
         paradux.logging.info('Cleaning up')
 
         if self._image_ismounted():
@@ -270,6 +293,7 @@ class Settings:
         return: True or False
         """
         paradux.logging.trace('file exists?', self.image_file)
+
         return os.path.isfile(self.image_file)
 
 
@@ -280,6 +304,8 @@ class Settings:
         recoverySecret: the recovery secret
         return: void
         """
+        paradux.logging.trace('_image_create')
+
         image_dir = os.path.dirname(self.image_file)
         if not os.path.isdir(image_dir):
             paradux.logging.trace('creating path to', image_dir)
@@ -347,6 +373,8 @@ have set those up.
 
         return: void
         """
+        paradux.logging.trace('_image_format')
+
         if paradux.utils.myexec("sudo mkfs.ext4 '" + self.crypt_device_path + "'"):
             paradux.logging.fatal('making ext4 filesystem failed')
 
@@ -357,7 +385,8 @@ have set those up.
 
         return: void
         """
-        paradux.logging.trace('mount path exists?', self.image_mount_point)
+        paradux.logging.trace('_image_mount')
+
         if not os.path.isdir(self.image_mount_point):
             paradux.logging.trace('creating path to mount point', self.image_mount_point)
             os.makedirs(self.image_mount_point, mode=0o700)
@@ -373,6 +402,7 @@ have set those up.
         return: True or False
         """
         paradux.logging.trace('is mounted?', self.image_mount_point)
+
         p = pathlib.Path(self.image_mount_point)
         return p != None and p.is_mount()
 
@@ -383,6 +413,8 @@ have set those up.
 
         return: void
         """
+        paradux.logging.trace('_image_umount')
+
         if paradux.paradux.utils.myexec("sudo umount '" + self.crypt_device_path + "'"):
             paradux.logging.fatal('umount failed')
     
@@ -393,7 +425,7 @@ have set those up.
 
         return: void
         """
-        paradux.logging.trace('changing permissions')
+        paradux.logging.trace('_image_set_permissions')
 
         # must be performed as root
         if paradux.paradux.utils.myexec("sudo chown " + str(os.getuid()) + ":" + str(os.getgid()) + " '" + self.image_mount_point + "'"):
@@ -432,6 +464,8 @@ Enter your everyday passphrase.
         """
         Close the cryptsetup device
         """
+        paradux.logging.trace('_cryptsetup_close')
+
         if paradux.utils.myexec("sudo cryptsetup close '" + self.crypt_device_name + "'"):
             paradux.logging.fatal('cryptsetup close failed')
 

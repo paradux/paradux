@@ -66,18 +66,26 @@ class Share:
     Collects all the information in one share that is distributed
     to one steward.
     """
-    def __init__(self, x, share):
+    def __init__(self, x, y):
         """
         Constructor.
 
-        :param x:              the polynomial was evaluated at this x value
-        :param share           the value of the share
+        :param x: the polynomial was evaluated at this x value
+        :param y: the value of the polynomial at this x value
         """
         self.x     = x
-        self.share = share
+        self.y = y
 
 
-    def asString( self ):
+    def getX(self):
+        return self.x
+
+
+    def getY(self):
+        return self.y
+
+
+    def asString(self):
         """
         Create printable string for this share.
 
@@ -86,7 +94,7 @@ class Share:
         return( "Shamir secret share (x="
                + str( self.x )
                + "): "
-               + str( self.share ))
+               + str( self.y ))
 
 
 class ShareGenerator:
@@ -110,7 +118,7 @@ class ShareGenerator:
         self.secret   = secret
 
 
-    def obtainShare(x):
+    def obtainShare(self, x):
         """
         Create a Share for x value x
 
@@ -130,7 +138,7 @@ class ShareGenerator:
         value += self.secret
         value %= self.prime
 
-        return ShamirSecretSharing.Share(x, value)
+        return Share(x, value)
 
 
     def getPolyK1(self):

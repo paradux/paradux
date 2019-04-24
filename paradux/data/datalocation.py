@@ -4,8 +4,10 @@
 # All rights reserved. License: see package.
 #
 
+import paradux.logging
 
-def _parseSourceDataLocationJson(j):
+
+def parseSourceDataLocationJson(j):
     """
     Helper function to parse a JSON source data location definition into an instance
     of SourceDataLocation
@@ -13,6 +15,8 @@ def _parseSourceDataLocationJson(j):
     j: JSON fragment
     return: instance of SourceDataLocation
     """
+    paradux.logging.trace('parseSourceDataLocationJson')
+
     name        = j['name']        if 'name'        in j else None
     description = j['description'] if 'description' in j else None
     url         = j['url']         # required
@@ -21,7 +25,7 @@ def _parseSourceDataLocationJson(j):
     return SourceDataLocation(name, description, url, credentials)
 
 
-def _parseDestinationDataLocationJson(j):
+def parseDestinationDataLocationJson(j):
     """
     Helper function to parse a JSON destination data location definition into an
     instance of DestinationDataLocation
@@ -29,6 +33,8 @@ def _parseDestinationDataLocationJson(j):
     j: JSON fragment
     return: instance of DestinationDataLocation
     """
+    paradux.logging.trace('parseDestinationDataLocationJson')
+
     name        = j['name']        # required
     description = j['description'] if 'description' in j else None
     url         = j['url']         # required

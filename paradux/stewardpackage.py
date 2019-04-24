@@ -6,20 +6,19 @@
 # All rights reserved. License: see package.
 #
 
+
 class StewardPackage:
     """
     Encapsulates all information conveyed to a Steward.
     """
-    def __init__(self, stewardInfo, secretsConfiguration):
-
-
-     paraduxUserName, paraduxUserContact, stewardName, secretShare, configurationLocations, paraduxVersion ):
-        self.paraduxUserName        = paraduxUserName
-        self.paraduxUserContact     = paraduxUserContact
-        self.stewardName            = stewardName
-        self.secretShare            = secretShare
-        self.configurationLocations = configurationLocations
-        self.paraduxVersion         = paraduxVersion
+    def __init__(self, user, steward, stewardShare, mersenne, minStewards, paraduxVersion):
+        self.user           = user
+        self.steward        = steward
+        self.stewardShare   = stewardShare
+        self.mersenne       = mersenne
+        self.minStewards    = minStewards      
+        self.paraduxVersion = paraduxVersion
+        self.configurationLocations = None # FIXME
 
 
     def asText(self):
@@ -30,41 +29,58 @@ class StewardPackage:
         return: plain text
         """
 
-        formattedSecretShare = self.secretShare # FIXME
+        shamirShare = self.stewardShare.getShamirShare() 
 
-        ret = """Dear {2:s},
+        ret = """Dear {steward.name:s},
 
 you have graciously agreed to help
-    {0:s}
+    {user.name:s}
 recover from personal data disasters that might befall them or their family.
 This sheet contains all information you need to have to assist when needed.
 Please keep it in a place where it safe from disasters (like fires) and
 unauthorized access (like burglars).
 
 Should you note unauthorized access, loss of this sheet, or if you do not
-want to assist {0:s} any more, please notify {0:s)
-immediately at:
-    {1:s}
+want to assist {user.name:s} any more, please notify them immediately""".format(user = self.user, steward = self.steward)
 
-Name of the scheme:
-    {5:s}
+        if self.user.contactEmail is not None and self.user.contactPhone is not None:
+            ret += """ at:
+"""
+            if self.user.contactEmail is not None:
+                ret += """    e-mail: {user.contactEmail:s}
+""".format(user = self.user)
 
+            if self.user.contactPhone is not None:
+                ret += """    phone: {user.contactPhone:s}
+""".format(user = self.user)
+
+        else:
+            ret += """.
+"""
+
+        if self.paraduxVersion is not None:
+            ret += """
+Paradux version:
+    {version:s}
+""".format(version = self.paraduxVersion)
+
+        ret += """
 Your recovery fragment:
-    {3:s}
-""".format(
-                self.paraduxUserName,
-                self.paraduxUserContact,
-                self.stewardName,
-                formattedSecretShare,
-                paraduxVersion)
+    x = {shamir.x:d}
+    y = {shamir.y:d}
+    m = {mersenne:d}
+    k = {minStewards:d}
+""".format(     shamir      = shamirShare,
+                mersenne    = self.mersenne,
+                minStewards = self.minStewards )
 
         if self.configurationLocations is not None and len(self.configurationLocations) > 0:
             formattedConfigurationLocations = "\n".join(self.configurationLocations)
             
             ret += """
 Locations for recovery data:
-{0:s}""".format(
-                formattedConfigurationLocations)
+{0:s}
+""".format(formattedConfigurationLocations)
 
         return ret
 
@@ -75,5 +91,12 @@ Locations for recovery data:
 
         return JSON fragment
         """
-        ret = {}
+        ret = {
+            'user'         : self.user.asJson(),
+            'steward'      : self.steward.asJson(),
+            'stewardshare' : self.stewardShare.asJson(),
+            'mersenne'     : self.mersenne,
+            'min-stewards' : self.minStewards
+        }
+
         return ret

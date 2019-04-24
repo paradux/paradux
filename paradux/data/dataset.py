@@ -4,14 +4,18 @@
 # All rights reserved. License: see package.
 #
 
+import paradux.logging
 
-def _parseDatasetJson(j):
+
+def parseDatasetJson(j):
     """
     Helper function to parse a JSON dataset definition into an instance of Dataset
 
     j: JSON fragment
     return: instance of Dataset
     """
+    paradux.logging.trace('parseDatasetJson')
+
     name        = j['name']        # required
     description = j['description'] if 'description' in j else None
     sourceJ     = j['source']      # required

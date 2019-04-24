@@ -18,8 +18,8 @@ def saveInitial(fileName):
     return: void
     """
     content = """{
-    "stewards" : [
-    ]
+    "stewards" : {
+    }
 }"""
     paradux.utils.saveFile(fileName, content, 0o600)
 
@@ -33,10 +33,10 @@ def createFromFile(masterFile, tmpFile):
     """
     j = paradux.utils.readJsonFromFile(masterFile)
 
-    stewards = []
-    for stewardJ in j['stewards']:
+    stewards = {}
+    for stewardId, stewardJ in j['stewards'].items():
         steward = paradux.data.steward.parseStewardJson(stewardJ)
-        stewards.append(steward)
+        stewards[stewardId] = steward
 
     return StewardsConfiguration(masterFile, tmpFile, stewards)
 
@@ -49,10 +49,19 @@ class StewardsConfiguration(Configuration):
         """
         Constructor.
 
-        stewards: list of Steward
+        stewards: dict of of Steward, keyed by id
         """
         super().__init__(masterFile, tmpFile)
         self.stewards = stewards
+
+
+    def getStewards(self):
+        """
+        Return the Stewards as dict, keyed by Steward id.
+
+        return: dict
+        """
+        return self.stewards
 
 
     def createReport(self,fileName):
@@ -63,12 +72,14 @@ class StewardsConfiguration(Configuration):
         reportItems = []
         try :
             j = paradux.utils.readJsonFromFile(fileName)
-            for stewardJ in j['stewards']:
+
+            print(repr(j))
+            for stewardId, stewardJ in j['stewards'].items():
                 steward = paradux.data.steward.parseStewardJson(stewardJ)
 
         except Exception as e:
             reportItems.append(ReportItem(Level.ERROR, str(type(e)) + ': ' + str(e)))
-            
+            paradux.logging.error(e)
         return Report(reportItems)
 
 
@@ -83,7 +94,7 @@ class StewardsConfiguration(Configuration):
 
         else:
             t = "You currently have {0:d} steward(s) configured. They are:\n".format(len(self.stewards))
-            for steward in self.stewards:
+            for stewardId, steward in self.stewards.items():
                 t += "* Name:           {0:s}\n".format( steward.name )
                 t += "  Address:        {0:s}\n".format( "<not set>" if steward.address      is None else steward.address )
                 t += "  Contact e-mail: {0:s}\n".format( "<not set>" if steward.contactEmail is None else steward.contactEmail )

@@ -13,7 +13,6 @@ import paradux.commands
 import paradux.settings
 from paradux.logging import FatalException
 import paradux.utils
-from pkg_resources import get_distribution
 import secrets
 import sys
 
@@ -71,7 +70,4 @@ def version():
 
     return: version string
     """
-
-    ret = get_distribution('paradux').version
-    print( "XXX version is " + ret )
-    return ret
+    return "0.1" # return as string
