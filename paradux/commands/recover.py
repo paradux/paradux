@@ -5,10 +5,11 @@
 #
 
 import argparse
-import json
+import os.path
 import paradux
 import paradux.data.stewardshare
 from paradux.shamir import ShamirSecretSharing
+import paradux.utils
 import sys
 
 def run(args, settings) :
@@ -18,9 +19,11 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
-    print( "Enter recovery JSON, EOF when done:")
 
-    recoveryJ = json.load(sys.stdin)
+    if not os.path.isfile(args.json):
+        raise FileNotFoundError(args.json)
+
+    recoveryJ = paradux.utils.readJsonFromFile(args.json)
 
     mersenne     = None
     minStewards  = None
@@ -63,4 +66,4 @@ def addSubParser( parentParser, cmdName ) :
     cmdName: name of this command
     """
     parser = parentParser.add_parser( cmdName, help='Recover the paradux configuration from steward packages.' )
-    parser.add_argument( '--json', action='store_const', const=True, required=True, help='Recover from JSON input at stdin (currently required(' )
+    parser.add_argument( '--json', action='store', required=True, help='Recovery data is in this JSON file' )

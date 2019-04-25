@@ -73,7 +73,6 @@ class StewardsConfiguration(Configuration):
         try :
             j = paradux.utils.readJsonFromFile(fileName)
 
-            print(repr(j))
             for stewardId, stewardJ in j['stewards'].items():
                 steward = paradux.data.steward.parseStewardJson(stewardJ)
 

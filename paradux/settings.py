@@ -20,6 +20,7 @@ import posixpath
 import random
 import re
 import shutil
+from tempfile import NamedTemporaryFile
 import threading
 
 
@@ -68,8 +69,6 @@ class Settings:
         self.user_config_file          = self.image_mount_point + '/user.json'          # configuration JSON for user info
         self.temp_user_config_file     = self.image_mount_point + '/user.tmp.json'      # being edited configuration JSON for user info
         self.secrets_config_file       = self.image_mount_point + '/secrets.json'       # configuration JSON for secrets
-
-        self.key_fifo = '/tmp/' + str(random.SystemRandom().randint(0, 1<<32)) # used to pipe a secret into cryptsetup
 
         self.datasetsConfiguration = None # allocated as needed
         self.stewardsConfiguration = None # allocated as needed
@@ -343,26 +342,19 @@ class Settings:
             file.truncate(self.image_size)
 
         recoveryPassphrase = _secretToPassphrase(recoverySecret)
+        recoveryKeyFile    = _createTempKeyFile(recoveryPassphrase)
 
         if paradux.utils.myexec(
                   'cryptsetup luksFormat'
                 + ' --batch-mode'
-                + ' --key-slot=' + str(self.recovery_key_slot)
-                + ' --key-file=-' # read from stdin
-                + " '" + self.image_file + "'",
-                recoveryPassphrase ):
+                + ' --key-slot=' + str(self.recovery_key_slot)   # set the key in this slot
+                + " '" + self.image_file + "'"
+                + " '" + recoveryKeyFile + "'" ):                        # new key is in this file
+
+            _deleteTempKeyFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksFormat failed')
 
         # Adding a second key requires that the previous key is provided.
-        # Reading both from stdin does not seem to work.
-        # We don't want to save either of those to disk.
-        # So we create a named pipe, and pipe to it on a different thread, yay!
-
-        os.mkfifo(self.key_fifo, 0o600)
-
-        piper = Piper(self.key_fifo, recoveryPassphrase)
-        piper.start()
-
 
         print("""
 Please set your everyday passphrase for paradux.
@@ -374,13 +366,15 @@ have set those up.
         if paradux.utils.myexec(
                   'cryptsetup luksAddKey'
                 + ' --batch-mode'
-                + ' --key-slot=' + str(self.everyday_key_slot)
-                + ' --key-file=' + self.key_fifo
-                + " '" + self.image_file + "'" ):
+                + ' --key-slot=' + str(self.everyday_key_slot) # set the key in this slot
+                + ' --key-file=' + recoveryKeyFile             # previous key, unrelated to --key-slot
+                + " '" + self.image_file + "'"
+                + " '" ):                                      # read new key from stdin
+
+            _deleteTempKeyFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksAddKey failed')
 
-        piper.join()
-        os.remove(self.key_fifo)
+        _deleteTempKeyFile(recoveryKeyFile)
 
 
     def _image_format(self):
@@ -521,40 +515,33 @@ Enter your everyday passphrase.
                   'cryptsetup luksKillSlot'
                 + ' --batch-mode'
                 + " '" + self.image_file + "'"
-                + " " + str(self.everyday_key_slot))
+                + " " + str(self.everyday_key_slot))   # no --key-slot argument in this form
             # ignore exit code: this fails if the everyday password has
             # been removed on this image (which it should be for offsite
             # storage of the configuration, but might not if we are recovering
             # a forgotten production configuration everyday password
 
-        recoveryPassphrase = _secretToPassphrase(recoverySecret)
-
-        os.mkfifo(self.key_fifo, 0o600)
-
-        piper = Piper(self.key_fifo, recoveryPassphrase)
-        piper.start()
-
-        print( "XXX: " )
-        print( recoveryPassphrase )
-
         print("""
-Please set your everyday passphrase for paradux.
-Make sure this passphrase is long, hard to guess, and DO NOT write it down anywhere.
-If you lose it, paradux lets you recover with the help of your stewards, once you
-have set those up.
+Please set your everyday passphrase for the recovered paradux configuration.
+Just like when you first set this up, make sure this passphrase is long, hard to
+guess, and DO NOT write it down anywhere.
 """)
+
+        recoveryPassphrase = _secretToPassphrase(recoverySecret)
+        recoveryKeyFile    = _createTempKeyFile(recoveryPassphrase)
 
         if paradux.utils.myexec(
                   'cryptsetup luksAddKey'
                 + ' --batch-mode'
-                + ' --key-slot=' + str(self.everyday_key_slot)
-                + ' --key-file=' + self.key_fifo
-                + " '" + self.image_file + "'" ):
+                + ' --key-slot=' + str(self.everyday_key_slot) # add new key into this slot
+                + ' --key-file=' + recoveryKeyFile             # existing key unrelated to --key-slot
+                + " '" + self.image_file + "'"
+                + " -" ):                                      # read new key from stdin
+
+            _deleteTempKeyFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksAddKey failed')
 
-        piper.join()
-        os.remove(self.key_fifo)
-
+        _deleteTempKeyFile(recoveryKeyFile)
 
 
 def _secretToPassphrase(secret):
@@ -584,26 +571,26 @@ def _secretToPassphrase(secret):
     return bytes(ret, encoding="utf-8")
 
 
-
-class Piper(threading.Thread):
+def _createTempKeyFile(content):
     """
-    Helper class that pipes some content into a file on a second
-    thread.
+    Create a temporary file
+
+    content: the content of the file
+    return: the file name
     """
-    def __init__(self, fileName, content):
-        """
-        Constructor.
+    f = NamedTemporaryFile(delete=False)
+    f.write(content)
+    f.close()
 
-        fileName: name of the file to pipe into
-        content: the content to pipe into
-        """
-        super().__init__()
-        self.fileName = fileName
-        self.content  = content
+    print( "XXX created temp key file: " + f.name )
 
-    def run(self):
-        with open(self.fileName, "wb") as file:
-            file.write(self.content)
-        with open('/tmp/pass', "wb") as file:
-            file.write(self.content)
-                
+    return f.name
+
+
+def _deleteTempKeyFile(name):
+    """
+    Factored out here so it's easier to debug.
+    """
+
+    print( "XXX should be unlinking: " + name )
+    # os.unlink(name)
