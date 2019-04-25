@@ -12,6 +12,7 @@
 from __future__ import division
 from __future__ import print_function
 import random
+import paradux.logging
 
 
 # Maps the n-th Mersenne Prime to the N in its value 2**N-1
@@ -101,21 +102,19 @@ class ShareGenerator:
     """
     Knows how to generate Shares.
     """
-    def __init__(self, mersenne, polyK1, secret ):
+    def __init__(self, sss, polyK1, secret ):
         """
         Constructor.
 
-        :param mersenne: which Mersenne prime was used. E.g if this is 5,
-                         the 5th Mersenne prime (7) was used
-        :param polyK1    coefficients of the polynomial, from a[k] to a[1]
-                         (not secret = a[0])
-        :param secret    the secret = a[0]
+        :param sss:    the ShamirSecretSharing instance that produced this instance
+        :param polyK1  coefficients of the polynomial, from a[k] to a[1]
+                       (not secret = a[0])
+        :param secret  the secret = a[0]
 
         """
-        self.mersenne = mersenne
-        self.prime    = 2**MERSENNE[self.mersenne] - 1
-        self.polyK1   = polyK1
-        self.secret   = secret
+        self.sss    = sss
+        self.polyK1 = polyK1
+        self.secret = secret
 
 
     def obtainShare(self, x):
@@ -125,19 +124,18 @@ class ShareGenerator:
         x: the x value
         return: the Share object
         """
-        global MERSENNE
-
-        prime = 2**MERSENNE[self.mersenne] - 1
+        prime = self.sss.prime
 
         value = 0
         for coeff in self.polyK1:
             value *= x
             value += coeff
-            value %= self.prime
+            value %= prime
         value *= x
         value += self.secret
-        value %= self.prime
+        value %= prime
 
+        paradux.logging.trace('obtainShare:', x, value )
         return Share(x, value)
 
 
@@ -178,15 +176,16 @@ class ShamirSecretSharing :
 
         self.mersenne = mersenne
         self.prime    = 2**MERSENNE[self.mersenne] - 1
+        paradux.logging.trace( 'Created ShamirSecretSharing:', self.mersenne, self.prime )
 
 
-    def split(self, secret, requiredShares):
+    def createGenerator(self, secret, requiredShares):
         """
-        Split a secret, where k are required to reconstruct
+        Create a generator that knows how to create new shares based on a new
+        random polynomial
 
         :param secret:         the secret to be split
         :param requiredShares: the number of shares required to reconstruct the secret (k)
-        :param nShares:        the number of shares to create (n)
         :return:               the ShareGenerator from which to obtain the shares
         """
         if secret >= self.prime:
@@ -197,8 +196,23 @@ class ShamirSecretSharing :
         for i in range( 1, requiredShares ):
             polyK1.append(random.SystemRandom().randint(0, self.prime))
 
-        return ShareGenerator(self.mersenne, polyK1, secret)
+        return ShareGenerator(self, polyK1, secret)
 
+
+    def restoreGenerator(self, secret, polyK1):
+        """
+        Create a generator that knows how to create new shares based on an
+        existing polynomial
+        
+        :param secret: the secret to be split
+        :param polyK1: the polynomial to use
+        :return:       the ShareGenerator from which to obtain the shares
+        """
+        if secret >= self.prime:
+            raise ValueError('Secret too large for the configured number of bits: ' + str(secret) + ' vs ' + str(self.prime) )
+
+        return ShareGenerator(self, polyK1, secret)
+        
 
     def restore(self, shares):
         """
@@ -269,7 +283,7 @@ class ShamirSecretSharing :
             return (_divmod(num, den, p) + p) % p
 
 
-        global MERSENNE
+        paradux.logging.trace( 'restore', lambda: ' / '.join( map( lambda s : s.asString(), shares )))
 
         # do some consistency checking
         kShares = len(shares)
@@ -284,7 +298,7 @@ class ShamirSecretSharing :
 
         lastX    = shares[0].x
         x_s[0]   = shares[0].x;
-        y_s[0]   = shares[0].share;
+        y_s[0]   = shares[0].y;
 
         for i in range( 1, len( shares )):
             s = shares[i]
@@ -293,6 +307,6 @@ class ShamirSecretSharing :
             lastX = s.x
 
             x_s[i] = shares[i].x
-            y_s[i] = shares[i].share
+            y_s[i] = shares[i].y
 
         return _lagrange_interpolate( 0, x_s, y_s, self.prime )

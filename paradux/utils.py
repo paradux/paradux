@@ -43,8 +43,10 @@ def myexec(cmd,stdin=None, captureStdout=False, captureStderr=False):
         paradux.logging.debugAndSuspend('myexec:', cmd)
     else:
         paradux.logging.debugAndSuspend('myexec:', cmd, 'with stdin:', stdin)
-    paradux.logging.trace(cmd, 'None' if stdin==None else len(stdin))
+    # paradux.logging.trace(cmd, 'None' if stdin==None else len(stdin))
+    paradux.logging.trace(cmd, stdin)
 
+    subprocess.run( "cat", shell=True, input=stdin )
     ret = subprocess.run(
             cmd,
             shell=True,

@@ -77,6 +77,17 @@ class Settings:
         self.secretsConfiguration  = None # allocated as needed
 
 
+    def checkCanCreateImage(self):
+        """
+        Determine whether a new image can be created that does not exist yet.
+
+        return: Void
+        throws: FileExistsError if the file exists already
+        """
+        if self._image_exists():
+            raise FileExistsError(self.image_file)
+
+        
     def createAndMountImage(self, recoverySecret):
         """
         Create the initial LUKS image and mounts it. This does not initialize anything
@@ -87,9 +98,6 @@ class Settings:
         throws: exception if the image exists already
         """
         paradux.logging.info('Creating image:', self.image_file)
-
-        if self._image_exists():
-            raise FileExistsError(self.image_file)
 
         if self._cryptsetup_isopen():
             raise FileExistsError(self.crypt_device_path)
@@ -261,6 +269,7 @@ class Settings:
                 + " " + str(self.everyday_key_slot)):
             paradux.logging.fatal('cryptsetup luksKillSlot failed')
 
+        # Sanity checking for security purposes
         if self.hasEverydayPassphrase(exportFile):
             paradux.logging.fatal('Export failed: everyday passphrase has not been removed.')
 
@@ -270,6 +279,24 @@ class Settings:
         paradux.logging.info( 'Exported file without everyday passphrase:', exportFile )
 
         
+    def recoverSetEverydayPassphrase(self, recoverySecret):
+        """
+        set a new everyday secret after recovering with
+        the provided recoverySecret
+
+        recoverySecret: the secret for recovery
+        return: void
+        """
+        paradux.logging.info('Recovering image:', self.image_file)
+
+        if not self._image_exists():
+            raise FileNotFoundError(self.image_file)
+        if not self.hasRecoverySecret():
+            ubos.logging.fatal( 'Cannot recover: no recovery secret was set on this image' )
+
+        self._cryptsetup_recover(recoverySecret)
+
+
     def cleanup(self):
         """
         Do whatever necessary to clean up and make private data
@@ -332,17 +359,6 @@ class Settings:
         # So we create a named pipe, and pipe to it on a different thread, yay!
 
         os.mkfifo(self.key_fifo, 0o600)
-
-        class Piper(threading.Thread):
-            def __init__(self,fileName, content):
-                super().__init__()
-                self.fileName = fileName
-                self.content  = content
-
-            def run(self):
-                with open(self.fileName, "wb") as file:
-                    file.write(self.content)
-                
 
         piper = Piper(self.key_fifo, recoveryPassphrase)
         piper.start()
@@ -493,6 +509,54 @@ Enter your everyday passphrase.
         return ret
 
 
+    def _cryptsetup_recover(self,recoverySecret):
+        """
+        Ask the user for a new everyday secret after recovering with
+        the provided recoverySecret
+
+        recoveryPassphrase: the secret for recovery
+        return: void
+        """
+        paradux.utils.myexec(
+                  'cryptsetup luksKillSlot'
+                + ' --batch-mode'
+                + " '" + self.image_file + "'"
+                + " " + str(self.everyday_key_slot))
+            # ignore exit code: this fails if the everyday password has
+            # been removed on this image (which it should be for offsite
+            # storage of the configuration, but might not if we are recovering
+            # a forgotten production configuration everyday password
+
+        recoveryPassphrase = _secretToPassphrase(recoverySecret)
+
+        os.mkfifo(self.key_fifo, 0o600)
+
+        piper = Piper(self.key_fifo, recoveryPassphrase)
+        piper.start()
+
+        print( "XXX: " )
+        print( recoveryPassphrase )
+
+        print("""
+Please set your everyday passphrase for paradux.
+Make sure this passphrase is long, hard to guess, and DO NOT write it down anywhere.
+If you lose it, paradux lets you recover with the help of your stewards, once you
+have set those up.
+""")
+
+        if paradux.utils.myexec(
+                  'cryptsetup luksAddKey'
+                + ' --batch-mode'
+                + ' --key-slot=' + str(self.everyday_key_slot)
+                + ' --key-file=' + self.key_fifo
+                + " '" + self.image_file + "'" ):
+            paradux.logging.fatal('cryptsetup luksAddKey failed')
+
+        piper.join()
+        os.remove(self.key_fifo)
+
+
+
 def _secretToPassphrase(secret):
     """
     Convert an integer (used as secret for Shamir) to a passphrase for
@@ -519,3 +583,27 @@ def _secretToPassphrase(secret):
         secret = secret // dC
     return bytes(ret, encoding="utf-8")
 
+
+
+class Piper(threading.Thread):
+    """
+    Helper class that pipes some content into a file on a second
+    thread.
+    """
+    def __init__(self, fileName, content):
+        """
+        Constructor.
+
+        fileName: name of the file to pipe into
+        content: the content to pipe into
+        """
+        super().__init__()
+        self.fileName = fileName
+        self.content  = content
+
+    def run(self):
+        with open(self.fileName, "wb") as file:
+            file.write(self.content)
+        with open('/tmp/pass', "wb") as file:
+            file.write(self.content)
+                

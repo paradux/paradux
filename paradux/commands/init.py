@@ -6,6 +6,7 @@
 
 import argparse
 import paradux
+import paradux.logging
 import random
 import re
 
@@ -21,6 +22,9 @@ def run(args, settings) :
         nbits  = 512
         recoverySecret = random.SystemRandom().randint(0, 1<<nbits)
 
+        paradux.logging.trace( 'recovery secret:', recoverySecret)
+
+        settings.checkCanCreateImage()
         settings.createAndMountImage(recoverySecret)
 
         settings.populateWithInitialData(args.min_stewards, nbits, recoverySecret)

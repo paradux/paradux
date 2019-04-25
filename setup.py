@@ -7,9 +7,10 @@
 #
 
 from setuptools import setup
+import paradux
 
 setup(name='paradux',
-      version='0.1',
+      version=paradux.version(),
       description='Recovery from maximum personal data disaster',
       url='http://github.com/paradux/paradux',
       packages=['paradux'],

@@ -21,7 +21,7 @@ def createAndSaveInitial(nbits, recoverySecret, requiredShares, fileName):
     mersenne = paradux.shamir.mersenneForBits(nbits)
 
     shamir    = ShamirSecretSharing(mersenne)
-    generator = shamir.split(recoverySecret,requiredShares)
+    generator = shamir.createGenerator(recoverySecret,requiredShares)
 
     j = {}
     j['mersenne']        = mersenne
@@ -134,7 +134,7 @@ class SecretsConfiguration:
             return None
 
         shamir    = ShamirSecretSharing(self.mersenne)
-        generator = shamir.split(self.recoverySecret, len(self.polyK1))
+        generator = shamir.restoreGenerator(self.recoverySecret, self.polyK1)
 
         shamirShare = generator.obtainShare(self.watermarkX)
         self.watermarkX += 1

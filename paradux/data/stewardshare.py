@@ -18,7 +18,7 @@ def parseStewardShareJson(j):
     """
     paradux.logging.trace('parseStewardShareJson')
 
-    shamirShare =_parseShamirSecretShare(j['shamir-share']) # required
+    shamirShare = parseShamirSecretShare(j['shamir-share']) # required
     issuedOn    = j['issued-on']                            # required
 
     issuedTs = paradux.utils.string2time(issuedOn)
@@ -26,7 +26,7 @@ def parseStewardShareJson(j):
     return StewardShare(shamirShare, issuedTs)
 
 
-def _parseShamirSecretShare(j):
+def parseShamirSecretShare(j):
     """
     Helper function to parse a JSON fragment into a Shamir Share
 

@@ -32,4 +32,3 @@ def addSubParser(parentParser, cmdName) :
     """
     parser = parentParser.add_parser( cmdName, help='Export the paradux configuration without the everyday passphrase.' )
     parser.add_argument( '--file', action='store', required=True, help='The file to export to.' )
-

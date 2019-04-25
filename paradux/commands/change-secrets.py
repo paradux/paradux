@@ -15,15 +15,7 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
-    try :
-        settings.mountImage()
-
-        paradux.logging.fatal( 'FIXME' )
-
-    finally:
-        settings.cleanup()
-
-    return True
+    return paradux.run_not_implemented(conf)
 
 
 def addSubParser(parentParser, cmdName) :
