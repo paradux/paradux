@@ -15,7 +15,7 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
-    return paradux.run_not_implemented(conf)
+    return paradux.run_not_implemented(args, settings)
 
 
 def addSubParser(parentParser, cmdName) :

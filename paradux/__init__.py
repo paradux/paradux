@@ -57,7 +57,7 @@ def run():
         paradux.logging.fatal('Sub-command not found:', cmdName, '. Add --help for help.' )
 
 
-def run_not_implemented(args,conf):
+def run_not_implemented(args,settings):
     paradux.logging.fatal('Not implemented yet! Sorry. Want to help? https://github.com/paradux')
 
 

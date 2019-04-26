@@ -35,7 +35,7 @@ def parseDestinationDataLocationJson(j):
     """
     paradux.logging.trace('parseDestinationDataLocationJson')
 
-    name        = j['name']                               # required
+    name        = j['name']                               if 'name'        in j else None
     description = j['description']                        if 'description' in j else None
     url         = j['url']                                # required
     credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
@@ -82,7 +82,12 @@ class SourceDataLocation(DataLocation):
 class DestinationDataLocation(DataLocation):
     """
     A DataLocation that is used as a destination in a Dataset.
+
+    frequency: specifies how frequently a backup is created to this destination
+    encryption_info: specifies how the backup is encrypted
     """
     def __init__(self, name, description, url, credentials, frequency, encryption_info):
-        super().__init__(name, description, url, credentials, frequency, encryption_info )
+        super().__init__(name, description, url, credentials )
 
+        self.frequency       = frequency
+        self.encryption_info = encryption_info

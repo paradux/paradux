@@ -5,7 +5,7 @@
 #
 
 import paradux.logging
-
+import paradux.data.datalocation
 
 def parseDatasetJson(j):
     """
@@ -20,16 +20,16 @@ def parseDatasetJson(j):
     description = j['description'] if 'description' in j else None
     sourceJ     = j['source']      # required
 
-    source       = _parseSourceDataLocationJson(sourceJ)
+    source       = paradux.data.datalocation.parseSourceDataLocationJson(sourceJ)
     destinations = []
 
     if 'destinations' in j:
         for destinationJ in j['destinations']:
-            destination = _parseDestinationDataLocationJson(destinationJ)
+            destination = paradux.data.datalocation.parseDestinationDataLocationJson(destinationJ)
             destinations.append(destination)
 
     return Dataset(name,description,source,destinations)
-    
+
 
 class Dataset:
     """
@@ -48,4 +48,4 @@ class Dataset:
         self.description  = description
         self.source       = source
         self.destinations = destinations
-        
+

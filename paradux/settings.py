@@ -257,6 +257,9 @@ class Settings:
         """
         paradux.logging.info('Exporting configuration with stripped everyday secret')
 
+        if not self._image_exists():
+            raise FileNotFoundError(self.image_file)
+
         if os.path.isfile(exportFile):
             raise FileExistsError(exportFile)
 
@@ -376,7 +379,7 @@ have set those up.
                 + ' --key-slot=' + str(self.everyday_key_slot) # set the key in this slot
                 + ' --key-file=' + recoveryKeyFile             # previous key, unrelated to --key-slot
                 + " '" + self.image_file + "'"
-                + " '" ):                                      # read new key from stdin
+                + " -" ):                                      # read new key from stdin
 
             _deleteTempKeyFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksAddKey failed')
@@ -392,7 +395,7 @@ have set those up.
         """
         paradux.logging.trace('_image_format')
 
-        if paradux.utils.myexec("sudo mkfs.ext4 '" + self.crypt_device_path + "'"):
+        if paradux.utils.myexec("sudo mkfs.ext4 '" + self.crypt_device_path + "' > /dev/null 2>&1"):
             paradux.logging.fatal('making ext4 filesystem failed')
 
 
