@@ -11,8 +11,14 @@ import paradux
 
 setup(name='paradux',
       version=paradux.version(),
+      author='Johannes Ernst',
+      license='AGPLv3',
       description='Recovery from maximum personal data disaster',
       url='http://github.com/paradux/paradux',
-      packages=['paradux'],
-      zip_safe=False,
-      install_requires=['cryptography', 'secrets']])
+      packages=[
+          'paradux',
+          'paradux.commands',
+          'paradux.configuration',
+          'paradux.data'
+      ],
+      zip_safe=False)
