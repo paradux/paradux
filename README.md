@@ -1,15 +1,13 @@
 # Paradux: a scheme to recover from maximum personal data disaster
 
-This repo is intended for code that implements Paradux, the data
-recovery scheme outlined
+This repo implements Paradux, the data recovery scheme outlined
 [in this blog post](https://upon2020.com/blog/2019/01/paradux-a-scheme-to-recover-from-maximum-personal-data-disaster/).
 
-So far, there are only some rudiments of code. They don't do much
-that is useful yet.
+Status: about the first version that does something useful, on the way to
+[plan for V1](docs/v1-plan.md).
 
-But we have a [plan for V1](docs/v1-plan.md). And
-[installation instructions](docs/install.md) for the code that doesn't
-really do anything useful yet.
+[Installation instructions](docs/install.md).
 
-Want to help? Get in touch! My contact info is in the commit log.
+Want to help? Submit issues, pull requests, ... and/or get in touch! My contact info
+is in the commit log.
 

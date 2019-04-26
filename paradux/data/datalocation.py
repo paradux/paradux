@@ -17,9 +17,9 @@ def parseSourceDataLocationJson(j):
     """
     paradux.logging.trace('parseSourceDataLocationJson')
 
-    name        = j['name']        if 'name'        in j else None
-    description = j['description'] if 'description' in j else None
-    url         = j['url']         # required
+    name        = j['name']                               if 'name'        in j else None
+    description = j['description']                        if 'description' in j else None
+    url         = j['url']                                # required
     credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
 
     return SourceDataLocation(name, description, url, credentials)
@@ -35,9 +35,9 @@ def parseDestinationDataLocationJson(j):
     """
     paradux.logging.trace('parseDestinationDataLocationJson')
 
-    name        = j['name']        # required
-    description = j['description'] if 'description' in j else None
-    url         = j['url']         # required
+    name        = j['name']                               # required
+    description = j['description']                        if 'description' in j else None
+    url         = j['url']                                # required
     credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
     frequency   = _parseFrequencyJson(  j['frequency']  ) if 'frequency'   in j else None
     encryption  = _parseEncryptionJson( j['encryption'] ) if 'encryption'  in j else None

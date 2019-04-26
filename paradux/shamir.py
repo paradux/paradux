@@ -3,7 +3,9 @@
 # Implements Shamir Secret Sharing.
 #
 # Partially based on the public domain algorithm given here:
-# https://en.wikipedia.org/wiki/Shamir%27s_Secret_Sharing
+#     https://en.wikipedia.org/wiki/Shamir%27s_Secret_Sharing
+# but structured differently so we can incrementally generate additional shares
+# after the initial set (and also, to make this algorithm more understandable!)
 #
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
@@ -21,7 +23,7 @@ MERSENNE = [
     2,
     3,
     5,
-    7,                                                                  
+    7,
     13,
     17,
     19,
@@ -47,6 +49,7 @@ def mersenneForBits(nbits):
     which Mersenne prime number is appropriate.
 
     :param nbits: the number of bits secrets are expected to be long
+    return: n with the nth Mersenne prime being appropriate for this number of bits
     """
     global MERSENNE
 
@@ -88,7 +91,7 @@ class Share:
 
     def asString(self):
         """
-        Create printable string for this share.
+        Create a printable string for this share. For debugging.
 
         :return: printable string
         """
@@ -119,7 +122,7 @@ class ShareGenerator:
 
     def obtainShare(self, x):
         """
-        Create a Share for x value x
+        Create a Share for this value x
 
         x: the x value
         return: the Share object
@@ -153,15 +156,14 @@ class ShareGenerator:
         """
         Return the secret.
 
-        return the secret
+        return: the secret
         """
         return self.secret
 
 
 class ShamirSecretSharing :
     """
-    Knows how to split a secret into shares, and how to reconstruct the
-    secret from shares, using a Mersenne prime.
+    Central switchboard for the Shamir secret sharing algorithm, using mersenne primes.
     """
 
     def __init__(self, mersenne):
@@ -201,9 +203,9 @@ class ShamirSecretSharing :
 
     def restoreGenerator(self, secret, polyK1):
         """
-        Create a generator that knows how to create new shares based on an
-        existing polynomial
-        
+        Create a generator that knows how to create new shares based on an existing
+        polynomial
+
         :param secret: the secret to be split
         :param polyK1: the polynomial to use
         :return:       the ShareGenerator from which to obtain the shares
@@ -212,15 +214,16 @@ class ShamirSecretSharing :
             raise ValueError('Secret too large for the configured number of bits: ' + str(secret) + ' vs ' + str(self.prime) )
 
         return ShareGenerator(self, polyK1, secret)
-        
+
 
     def restore(self, shares):
         """
         Given a set of shares, restore the secret.
-        
+
         :param shares: the shares from which to reconstruct the secret
         :return:       the reconstructed secret
         """
+
         def _product(vals):
             """
             Helper method: calculate product of inputs
@@ -232,13 +235,13 @@ class ShamirSecretSharing :
 
 
         def _extended_gcd(a, b):
-            '''
+            """"
             Helper method: division in integers modulus p means finding the inverse
             of the denominator modulo p and then multiplying the numerator by this
             inverse (Note: inverse of A is B such that A*B % p == 1) this can
             be computed via extended Euclidean algorithm
             http://en.wikipedia.org/wiki/Modular_multiplicative_inverse#Computation
-            '''
+            """
             x = 0
             last_x = 1
             y = 1
@@ -252,12 +255,12 @@ class ShamirSecretSharing :
 
 
         def _divmod(num, den, p):
-            '''
+            """
             Helper method: compute num / den modulo prime p
 
             To explain what this means, the return value will be such that
             the following is true: den * _divmod(num, den, p) % p == num
-            '''
+            """
             inv, _ = _extended_gcd(den, p)
             return num * inv
 
@@ -268,7 +271,6 @@ class ShamirSecretSharing :
             Find the y-value for the given x, given n (x, y) points;
             k points will define a polynomial of up to kth order
             """
-
             k = len(x_s)
             nums = []  # avoid inexact division
             dens = []

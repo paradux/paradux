@@ -11,7 +11,7 @@ import paradux.utils
 
 def parseStewardShareJson(j):
     """
-    Help function to parse a JSON fragment into an instance of StewardShare
+    Helper function to parse a JSON fragment into an instance of StewardShare
 
     j: JSON fragment
     return: StewardShare
@@ -44,6 +44,12 @@ class StewardShare:
     All information issued to a Steward that is specific to that Steward.
     """
     def __init__(self, shamirShare, issuedTs):
+        """
+        Constructor.
+
+        shamirShare: the Shamir share issued to this Steward
+        issuedTs: UNIX timestamp when this Shamir share was issued to this Steward
+        """
         self.shamirShare = shamirShare
         self.issuedTs    = issuedTs
 

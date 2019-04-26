@@ -37,7 +37,7 @@ def run(args, settings) :
                         stewardPackages)))
 
         else:
-            print( "No stewards have been defined. Not exporting any packages." )
+            print( "No stewards have been defined. Not exporting any steward packages." )
 
     finally:
         settings.cleanup()

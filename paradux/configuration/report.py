@@ -20,6 +20,9 @@ class Level(Enum):
         self.myname = myname
 
     def __str__(self):
+        """
+        Name is the representation of the level.
+        """
         return self.myname
 
 
@@ -47,7 +50,7 @@ class ReportItem:
         return self.message
         # return str(self.level) + self.message
         # return "{0:7s}: {1:s}".format(str(self.level), self.message)
-        
+
 
 class Report:
     """
@@ -56,6 +59,11 @@ class Report:
     """
 
     def __init__(self,reportItems = []):
+        """
+        Constructor.
+
+        reportItems: them items constituting the report, in sequence
+        """
         self.reportItems = reportItems
 
 
@@ -77,4 +85,4 @@ class Report:
         """
         ret = "\n".join( map( lambda item : item.asText(), self.reportItems ))
         return ret
-            
+

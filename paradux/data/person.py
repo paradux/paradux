@@ -26,9 +26,19 @@ def parsePersonJson(j):
 
 class Person:
     """
-    Represents a Person.
+    Represents a Person. This is used for the User and for Stewards.
     """
     def __init__(self, name, address, contactEmail, contactPhone):
+        """
+        Constructor.
+
+        name: the name of the Person, such as John P Steward
+        address: the physical address of the Person, sufficient to locate them
+        contactEmail: an e-mail address they have provided as a way to contact them about
+             matters related to this paradux configuration
+        contactPhone: a phone number they have provided as a way to contact them about
+             matters related to this paradux configuration
+        """
         self.name         = name
         self.address      = address
         self.contactEmail = contactEmail

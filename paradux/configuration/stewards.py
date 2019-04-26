@@ -66,7 +66,7 @@ class StewardsConfiguration(Configuration):
 
     def createReport(self,fileName):
         """
-        Overrides
+        Implementation for this subclass.
         """
 
         reportItems = []

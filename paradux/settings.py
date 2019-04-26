@@ -1,7 +1,5 @@
 #!/usr/bin/python
 #
-# Collects the settings for this instance of paradux
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
@@ -38,6 +36,8 @@ def create(args):
     return: Settings object
     """
     if hasattr(args,'image_size'):
+        # This is a little bit of a hack, but allows us to use the same
+        # factory method for init and all the other commands
         return Settings(args.directory, args.image_size)
     else:
         return Settings(args.directory, None)
@@ -48,14 +48,14 @@ class Settings:
     Collects information about the paradux settings in effect during this run
 
     directory: the paradux data directory
+    image_size: the size of the to-be-created configuration image, if any
     """
     def __init__(self, directory, image_size) :
         self.directory         = directory
         self.image_size        = image_size
 
-        self.recovery_key_size = 32 # LUKS parameter
-        self.recovery_key_slot =  7 # LUKS parameter
-        self.everyday_key_slot =  0 # LUKS parameter
+        self.recovery_key_slot =  7 # the LUKS slot we use for the recovery key
+        self.everyday_key_slot =  0 # the LUKS slot we use for the everyday key
 
         self.image_file        = self.directory + '/configuration.img'        # LUKS file
         self.crypt_device_name = 'paradux'                                    # short name of the device created by cryptsetup
@@ -86,13 +86,14 @@ class Settings:
         if self._image_exists():
             raise FileExistsError(self.image_file)
 
-        
+
     def createAndMountImage(self, recoverySecret):
         """
-        Create the initial LUKS image and mounts it. This does not initialize anything
-        inside the image.
+        Create the initial LUKS image, sets the secrets (recovery and everyday) and
+        mounts the image. This does not initialize anything inside the image.
 
-        recoverySecret: the recovery secret
+        recoverySecret: the recovery secret to set. The everyday password is ask-for
+             on the command-line
         return: void
         throws: exception if the image exists already
         """
@@ -100,7 +101,7 @@ class Settings:
 
         if self._cryptsetup_isopen():
             raise FileExistsError(self.crypt_device_path)
-            
+
         self._image_create(recoverySecret)
         self._cryptsetup_open()
         self._image_format()
@@ -125,10 +126,10 @@ class Settings:
 
     def populateWithInitialData(self, min_stewards, nbits, recoverySecret):
         """
-        Initialize this configuration by creating default files inside the image.        
+        Initialize this configuration by creating default files inside the image.
 
         min_stewards: the number of stewards required to recover
-        nbit: length of the recovery secret
+        nbits: length of the recovery secret
         recoverySecret: the secret for recovery
         return: void
         """
@@ -188,7 +189,7 @@ class Settings:
         """
         Obtain a list of StewardPackage ready for export.
 
-        return: list
+        return: list fo StewardPackage
         """
         paradux.logging.trace('getStewardPackages')
 
@@ -216,9 +217,10 @@ class Settings:
 
     def hasEverydayPassphrase(self, imageFile=None):
         """
-        Has the image the everyday passphrase set
+        Has the image the everyday passphrase set?
 
         imageFile: name of the image file, or defaults to self.image_file
+        return: True or False
         """
         paradux.logging.trace('hasEverydayPassphrase')
 
@@ -231,9 +233,10 @@ class Settings:
 
     def hasRecoverySecret(self, imageFile=None):
         """
-        Has the image the recovery secret set
+        Has the image the recovery secret set?
 
         imageFile: name of the image file, or defaults to self.image_file
+        return: True or False
         """
         paradux.logging.trace('hasRecoverySecret')
 
@@ -246,7 +249,9 @@ class Settings:
 
     def exportAll(self,exportFile):
         """
-        Export the image to the named file, stripping the everyday passphrase.
+        Export the image to the named file, stripping the everyday passphrase. Also
+        performs sanity checks that the recovery secret is still set, while the
+        everyday passphrase has been removed.
 
         exportFile: the file to export to
         """
@@ -277,7 +282,7 @@ class Settings:
 
         paradux.logging.info( 'Exported file without everyday passphrase:', exportFile )
 
-        
+
     def recoverSetEverydayPassphrase(self, recoverySecret):
         """
         set a new everyday secret after recovering with
@@ -298,8 +303,9 @@ class Settings:
 
     def cleanup(self):
         """
-        Do whatever necessary to clean up and make private data
-        inaccessible again.
+        Do whatever necessary to clean up and make private data inaccessible again. This
+        is invoked in a variety of circumstances, including internal errors, and thus
+        needs to be rather tolerant.
 
         return: void
         """
@@ -314,7 +320,7 @@ class Settings:
 
     def _image_exists(self):
         """
-        Determine whether the LUKS image exists
+        Does the LUKS image exist already?
 
         return: True or False
         """
@@ -325,7 +331,8 @@ class Settings:
 
     def _image_create(self, recoverySecret):
         """
-        Create the image file
+        Create the image file with the provided recovery secret, and ask the user for
+        an everyday passphrase.
 
         recoverySecret: the recovery secret
         return: void
@@ -427,7 +434,7 @@ have set those up.
 
         if paradux.paradux.utils.myexec("sudo umount '" + self.crypt_device_path + "'"):
             paradux.logging.fatal('umount failed')
-    
+
 
     def _image_set_permissions(self):
         """
@@ -443,7 +450,7 @@ have set those up.
 
         if paradux.paradux.utils.myexec("sudo chmod 0700 '" + self.image_mount_point + "'"):
             paradux.logging.fatal('chmod failed')
-        
+
         paradux.logging.debugAndSuspend( 'Check permissions' )
 
 
@@ -456,7 +463,7 @@ Enter your everyday passphrase.
 """)
         if paradux.utils.myexec("sudo cryptsetup open '" + self.image_file + "' '" + self.crypt_device_name + "'"):
             paradux.logging.fatal('cryptsetup open failed')
-        
+
 
     def _cryptsetup_isopen(self):
         """
@@ -468,11 +475,13 @@ Enter your everyday passphrase.
         paradux.logging.trace('is block device?', self.crypt_device_path)
         p = pathlib.Path(self.crypt_device_path)
         return p != None and p.is_block_device()
-        
+
 
     def _cryptsetup_close(self):
         """
         Close the cryptsetup device
+
+        return: void
         """
         paradux.logging.trace('_cryptsetup_close')
 
@@ -546,13 +555,12 @@ guess, and DO NOT write it down anywhere.
 
 def _secretToPassphrase(secret):
     """
-    Convert an integer (used as secret for Shamir) to a passphrase for
-    cryptsetup. Use only 7bit ASCII. Cryptsetup supports up to 512 chars.
-    Just to be extra safe, we use the range from 32 (space, inclusive)
-    through 127 (DEL, exclusive).
+    Convert an integer (used as secret for Shamir) to a passphrase for cryptsetup. Use
+    only 7bit ASCII to be on the safe side. (Note that cryptsetup supports up to 512 chars.)
+    Just to be extra safe, we use the range from 32 (space, inclusive) through 127
+    (DEL, exclusive).
 
-    Note: if you change this algorithm, you will break everybody's
-    recovery!
+    Note: if you change this algorithm, you will break everybody's recovery!
 
     secret: the integer secret
     return: passphrase, as a bytes-like object
@@ -582,8 +590,7 @@ def _createTempKeyFile(content):
     f.write(content)
     f.close()
 
-    print( "XXX created temp key file: " + f.name )
-
+    paradux.logging.trace( "Created temp key file:", f.name )
     return f.name
 
 
@@ -592,5 +599,6 @@ def _deleteTempKeyFile(name):
     Factored out here so it's easier to debug.
     """
 
-    print( "XXX should be unlinking: " + name )
-    # os.unlink(name)
+    paradux.logging.trace( "Unlinking temp key file:", name )
+    os.unlink(name)
+

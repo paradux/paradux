@@ -32,7 +32,9 @@ def parseStewardJson(j):
 class Steward(Person):
     """
     All information we have about and related to a Steward.
+
+    acceptedTs: UNIX timestamp when they accepted to be a Steward for this user
     """
     def __init__(self, name, address, contactEmail, contactPhone, acceptedTs):
         super().__init__(name, address, contactEmail, contactPhone)
-        self.acceptedTs   = acceptedTs
+        self.acceptedTs = acceptedTs

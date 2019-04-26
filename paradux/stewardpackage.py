@@ -1,7 +1,5 @@
 #!/usr/bin/python
 #
-# Collects the settings for this instance of paradux
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
@@ -10,13 +8,20 @@
 class StewardPackage:
     """
     Encapsulates all information conveyed to a Steward.
+
+    user: the user whose paradux instance this is
+    steward: the steward to whom the StewardPackage is conveyed
+    stewardShare: the share-related information conveyed to the steward
+    mersenne: the mersenn-th Mersenne prime number was used
+    minStewards: the minimum number of stewards required to restore
+    paraduxVersion: the version of paradux that was used
     """
     def __init__(self, user, steward, stewardShare, mersenne, minStewards, paraduxVersion):
         self.user           = user
         self.steward        = steward
         self.stewardShare   = stewardShare
         self.mersenne       = mersenne
-        self.minStewards    = minStewards      
+        self.minStewards    = minStewards
         self.paraduxVersion = paraduxVersion
         self.configurationLocations = None # FIXME
 
@@ -29,7 +34,7 @@ class StewardPackage:
         return: plain text
         """
 
-        shamirShare = self.stewardShare.getShamirShare() 
+        shamirShare = self.stewardShare.getShamirShare()
 
         ret = """Dear {steward.name:s},
 
@@ -76,7 +81,7 @@ Your recovery fragment:
 
         if self.configurationLocations is not None and len(self.configurationLocations) > 0:
             formattedConfigurationLocations = "\n".join(self.configurationLocations)
-            
+
             ret += """
 Locations for recovery data:
 {0:s}

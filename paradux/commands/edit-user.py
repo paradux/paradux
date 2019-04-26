@@ -15,7 +15,6 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
-
     conf = None
     try :
         settings.mountImage()
@@ -32,7 +31,7 @@ def run(args, settings) :
             if report.isAllOk():
                 conf.promoteTemp()
                 break # we are done
-                
+
             print( report.asText() )
 
             if input( 'Continue editing? Y/N: ' ).lower() == 'n':

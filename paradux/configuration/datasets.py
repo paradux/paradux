@@ -39,7 +39,7 @@ def createFromFile(masterFile, tmpFile):
         datasets.append(dataset)
 
     return DatasetsConfiguration(masterFile, tmpFile, datasets)
-    
+
 
 class DatasetsConfiguration(Configuration):
     """
@@ -57,9 +57,8 @@ class DatasetsConfiguration(Configuration):
 
     def createReport(self,fileName):
         """
-        Overrides
+        Implementation for this subclass.
         """
-
         reportItems = []
         try :
             j = paradux.utils.readJsonFromFile(fileName)
@@ -93,4 +92,4 @@ class DatasetsConfiguration(Configuration):
                     t += "  destination:  {0:s}\n".format(destination.url)
 
         return t
-        
+

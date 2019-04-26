@@ -1,7 +1,5 @@
 #!/usr/bin/python
 #
-# Collects the settings for this instance of paradux
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
@@ -58,7 +56,7 @@ class SshCredentials(Credentials):
         """
         self.username    = username
         self.private_key = private_key
-        
+
 
 class AwsApiCredentials(Credentials):
     """
@@ -68,7 +66,7 @@ class AwsApiCredentials(Credentials):
     def __init__(self, apiKey, secretApiKey):
         """
         Constructor.
-        
+
         apiKey: the API key
         secretAccessKey: the secret access key for the API
         """

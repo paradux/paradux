@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Logging functions
+# Centralized logging functions that are at a higher level than Python's.
 #
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
@@ -13,6 +13,7 @@ import os.path
 import paradux.utils
 import sys
 import traceback
+
 
 logging.config.dictConfig({
     'version'                  : 1,
@@ -48,11 +49,10 @@ def initialize(
         debug     = False):
     """
     Invoked at the beginning of a script, this initializes logging.
-    
+
     verbosity: integer capturing the level of verbosity (0 and higher)
     debug: yes or no: if yes, stop and wait for keyboard input in key locations
     """
-
     global LOG
     global DEBUG
 
@@ -68,6 +68,7 @@ def initialize(
 def trace(*args):
     """
     Emit a trace message.
+
     args: the message or message components
     """
     if LOG.isEnabledFor(logging.DEBUG):
@@ -77,7 +78,8 @@ def trace(*args):
 def isTraceActive() :
     """
     Is trace logging on?
-    return: 1 or 0
+
+    return: True or False
     """
     return LOG.isEnabledFor(logging.DEBUG)
 
@@ -85,6 +87,7 @@ def isTraceActive() :
 def info(*args):
     """
     Emit an info message.
+
     args: msg: the message or message components
     """
     if LOG.isEnabledFor(logging.INFO):
@@ -94,7 +97,8 @@ def info(*args):
 def isInfoActive():
     """
     Is info logging on?
-    return: 1 or 0
+
+    return: True or False
     """
     return LOG.isEnabledFor(logging.INFO)
 
@@ -102,6 +106,7 @@ def isInfoActive():
 def warning(*args):
     """
     Emit a warning message.
+
     args: the message or message components
     """
 
@@ -112,7 +117,8 @@ def warning(*args):
 def isWarningActive():
     """
     Is warning logging on?
-    return: 1 or 0
+
+    return: True or False
     """
     return LOG.isEnabledFor(logging.WARNING)
 
@@ -120,6 +126,7 @@ def isWarningActive():
 def error(*args):
     """
     Emit an error message.
+
     args: the message or message components
     """
     if LOG.isEnabledFor(logging.ERROR):
@@ -129,7 +136,8 @@ def error(*args):
 def isErrorActive():
     """
     Is error logging on?
-    return: 1 or 0
+
+    return: True or False
     """
     return LOG.isEnabledFor(logging.ERROR)
 
@@ -137,6 +145,7 @@ def isErrorActive():
 def fatal(*args):
     """
     Emit a fatal error message and exit with code 1.
+
     args: the message or message components
     """
     if args:
@@ -149,7 +158,8 @@ def fatal(*args):
 def isFatalActive():
     """
     Is fatal logging on?
-    return: 1 or 0
+
+    return: True or False
     """
     return LOG.isEnabledFor(logging.CRITICAL)
 
@@ -157,16 +167,18 @@ def isFatalActive():
 def isDebugAndSuspendActive():
     """
     Is debug logging and suspending on?
-    return: 1 or 0
+
+    return: True or False
     """
     return DEBUG;
 
 
 def debugAndSuspend(*args):
     """
-    Emit a debug message, and then wait for keyboard input to continue.
+    If debug is enabled, emit a debug message, and then wait for keyboard input to continue.
+
     args: the message or message components; may be empty
-    return: 1 if debugAndSuspend is active
+    return: True if debugAndSuspend is active
     """
     if DEBUG:
         if args:
@@ -199,8 +211,14 @@ def _constructMsg(withLoc, withTb, *args):
     else:
         ret = ''
 
-        
+
     def m(a):
+        """
+        Formats provided arguments into something suitable for log messages.
+
+        a: the argument
+        return: string for the log
+        """
         if a is None:
             return '<undef>'
         if callable(a):
@@ -218,14 +236,3 @@ def _constructMsg(withLoc, withTb, *args):
             ret += ''.join(traceback.format_exception(type(last), last, last.__traceback__))
 
     return ret
-
-
-class FatalException:
-    """
-    Something fatal happened and we need to abort.
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg

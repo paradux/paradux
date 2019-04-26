@@ -45,12 +45,12 @@ def createFromFile(masterFile):
     polyK1         = _parseIntegerArray(j['polynomial'])   # required
     watermarkX     = j['watermark-x']                      # required
     recoverySecret = j['recovery-secret']                  # required
-    
+
     issuedStewardShares = {}
     for stewardId, stewardShareJ in j['issued-shares'].items():
         stewardShare = paradux.data.stewardshare.parseStewardShareJson(stewardShareJ)
         issuedStewardShares[stewardId] = stewardShare
-    
+
     return SecretsConfiguration(masterFile, mersenne, polyK1, watermarkX, recoverySecret, issuedStewardShares)
 
 
@@ -88,7 +88,7 @@ class SecretsConfiguration:
         self.watermarkX          = watermarkX
         self.recoverySecret      = recoverySecret
         self.issuedStewardShares = issuedStewardShares
-        
+
 
     def getIssuedStewardShare(self, stewardId):
         """

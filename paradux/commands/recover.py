@@ -19,8 +19,8 @@ def run(args, settings) :
     args: parsed command-line arguments
     settings: settings for this paradux instance
     """
-
     if not os.path.isfile(args.json):
+        # Cannot recover from non-existing JSON recovery file
         raise FileNotFoundError(args.json)
 
     recoveryJ = paradux.utils.readJsonFromFile(args.json)
@@ -46,7 +46,7 @@ def run(args, settings) :
         paradux.logging.fatal( 'Not enough stewards contributed their shares, cannot recover:', len(shamirShares), '<', minStewards )
     if len(shamirShares) > minStewards:
         paradux.logging.fatal( 'Too many stewards contributed their shares, only submit the ones to use:', len(shamirShares), '>', minStewards )
-        
+
     shamir = ShamirSecretSharing(mersenne)
     recoverySecret = shamir.restore(shamirShares)
 

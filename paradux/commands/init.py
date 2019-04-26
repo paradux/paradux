@@ -33,7 +33,7 @@ def run(args, settings) :
         settings.cleanup()
 
     return True
-    
+
 
 
 def addSubParser(parentParser, cmdName) :
@@ -45,7 +45,12 @@ def addSubParser(parentParser, cmdName) :
 
     def valid_disk_size(value):
         """
-        Check and convert valid disk image size
+        Check and convert a string representing a disk size into an integer
+        representing a disk size.
+
+        value: the disk size string
+        return: disk size integer
+        throws argparse.ArgumentTypeException: if a syntax error occurred
         """
         factors = {
             'k'  : 1000,
@@ -73,10 +78,20 @@ def addSubParser(parentParser, cmdName) :
             raise argparse.ArgumentTypeError('Specify image size like this: 123 MiB')
 
     def min_stewards(value):
+        """
+        Enforce a minimum of 2 stewards.
+
+        value: specified number of minimum stewards
+        return: minimum number of stewards
+        throws argparse.ArgumentTypeException: out of range
+
+        """
         if value >= 2:
             raise argparse.ArgumentTypeError('Number of stewards must be at least 2')
-            
-        
+
+        return value
+
+
     parser = parentParser.add_parser(cmdName, help='Sets up a Paradux installation for the first time.')
     parser.add_argument('--image-size',   type=valid_disk_size, default='24 M', help='Size of the LUKS disk image for secrets.')
     parser.add_argument('--min-stewards', type=min_stewards,    default=3,      help='Number of stewards required to recover (2 or more).')

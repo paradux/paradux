@@ -64,14 +64,8 @@ class Configuration:
             ReportItem( Level.ERROR, 'FIXME override' )
         ] )
 
-        
-    def promoteTemp(self):
-        """
-        Promote the current temporary Configuration to master.
-        This presupposes that the temporary config JSON is valid.
 
-        return: void
-        """
+    def promoteTemp(self):
         """
         Promote the temporary config JSON file to master. This presupposes
         that the temporary config JSON is valid.

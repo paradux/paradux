@@ -61,9 +61,8 @@ class UserConfiguration(Configuration):
 
     def createReport(self,fileName):
         """
-        Overrides
+        Implementation for this subclass.
         """
-
         reportItems = []
         try :
             j = paradux.utils.readJsonFromFile(fileName)
@@ -91,4 +90,3 @@ class UserConfiguration(Configuration):
             t += "Contact phone:  {0:s}\n".format( "<not set>" if self.user.contactPhone is None else self.user.contactPhone )
 
         return t
-        

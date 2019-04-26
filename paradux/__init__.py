@@ -1,7 +1,5 @@
 #!/usr/bin/python
 #
-# The central entry point into paradux.
-#
 # Copyright (C) 2019 and later, Paradux project.
 # All rights reserved. License: see package.
 #
@@ -11,15 +9,14 @@ import importlib
 import os.path
 import paradux.commands
 import paradux.settings
-from paradux.logging import FatalException
 import paradux.utils
-import secrets
 import sys
 
 
 def run():
     """
-    Main entry point into Paradux
+    Main entry point into Paradux: looks for available subcommands and
+    executes the correct one.
     """
     cmdNames = paradux.utils.findSubmodules(paradux.commands)
 
