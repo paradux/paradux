@@ -1,0 +1,14 @@
+{
+    "stewards" : {
+        "friend-a" : {
+            "name" : "John A Steward",             # required
+            "address" : "...",                     # optional
+            "contact-email" : "johna@example.com", # optional
+            "contact-phone" : "(123) 456-7890",    # optional
+            "accepted-on"   : "20190428-000000"    # required
+        },
+        "friend-b" : {
+            ...
+        }, ...
+    }
+}
