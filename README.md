@@ -1,10 +1,42 @@
-# Paradux: a scheme to recover from maximum personal data disaster
+# Paradux: recover from maximum personal data disaster
 
-This repo implements Paradux, the data recovery scheme outlined
-[in this blog post](https://upon2020.com/blog/2019/01/paradux-a-scheme-to-recover-from-maximum-personal-data-disaster/).
+## What's this about?
 
-Status: about the first version that does something useful, on the way to
-[plan for V1](docs/v1-plan.md).
+Many of the residents of the towns that were wiped out recently by the
+California wildfires did not have time to grab their laptops, bring their
+hard disks, or take their password recovery sheets with them. Similarly,
+what if your favorite cloud services simply kicked you off? Personal data
+disasters lurk everywhere. If one hits you, could you recover your data
+and your passwords?
+
+Paradux is a new scheme, and supporting software, that stores your
+personal data, and your passwords, in several different places that you
+choose, so that:
+
+* no third party can read it
+* there are redundant copies of everything
+* the effort for you to maintain the scheme is minimal, and
+* you can even recover if you remember nothing.
+
+It does this with the help of key splitting and trusted friends. It
+applies to personal data, and credentials.
+
+## Linuxfest NorthWest 2019 presentation
+
+We got to [present](https://lfnw.org/conferences/2019/program/proposals/264)
+at Linuxfest Northwest, and they recorded it! Here it is:
+
+[![YouTube video](http://img.youtube.com/vi/Ld85wTh9uZs/0.jpg)](http://www.youtube.com/watch?v=Ld85wTh9uZs "YouTube video")
+
+## Status
+
+Version 0.1 is here. It's somewhat painful to use (edit JSON files! Manually
+upload data! Bring your terminal skills! Linux only so far.) but the
+most important functionality is working.
+
+Help wanted! File an issue or submitting a PR is best.
+
+## Howto
 
 [Installation instructions](docs/install.md). Note that paradux depends on
 `cryptsetup` and thus only works on Linux. The edit functionality depends on
@@ -19,10 +51,11 @@ There are some examples for the data files:
 Here is a typical sequence to set up the scheme
 * Create a new paradux configuration: `paradux init`. This will ask you
   to set your everyday password.
-* Enter your datasets when prompted by `paradux edit-datasets`.
-* Export your encrypted configuration with `paradux export-configuration`
-  and store it in various on-line locations from where your stewards can
-  recover it.
+* Enter your datasets when prompted by `paradux edit-datasets`. See examples
+  linked above.
+* Export your encrypted configuration (automatically strips everyday password)
+  with `paradux export-configuration` and store it in various on-line
+  locations from where your stewards can recover it.
 * Find a set of N stewards whom you trust. Enter their information when
   prompted by `paradux edit-stewards` (see example file above)
 * Give your stewards their respective steward package. You export them with
@@ -39,8 +72,7 @@ To recover in case of disaster:
   files and download it
 * Find at least three stewards (the number was configurable during
   init) and obtain their fragment of the recovery secret
+* [For now](https://github.com/paradux/paradux/issues/8), assemble the
+  information you got from the stewards into a JSON file.
 * Run `paradux recover`.
-
-Want to help? Submit issues, pull requests, ... and/or get in touch! My contact info
-is in the commit log.
 
