@@ -77,7 +77,7 @@ Your recovery fragment:
     k = {minStewards:d}
 """.format(     shamir      = shamirShare,
                 mersenne    = self.mersenne,
-                minStewards = self.minStewards )
+                minStewards = self.minStewards)
 
         if self.configurationLocations is not None and len(self.configurationLocations) > 0:
             formattedConfigurationLocations = "\n".join(self.configurationLocations)

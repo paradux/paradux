@@ -198,7 +198,7 @@ class Settings:
         secretsConf  = self.getSecretsConfiguration()
         version      = paradux.version()
 
-        ret       = []
+        ret       = dict()
         needsSave = False
 
         for stewardId, steward in stewardsConf.getStewards().items() :
@@ -207,7 +207,7 @@ class Settings:
                 stewardShare = secretsConf.issueStewardShare(stewardId)
                 needsSave = True
 
-            ret.append(StewardPackage(userConf.getUser(), steward, stewardShare, secretsConf.getMersenne(), secretsConf.getMinStewards(), version))
+            ret[stewardId] = StewardPackage(userConf.getUser(), steward, stewardShare, secretsConf.getMersenne(), secretsConf.getMinStewards(), version)
 
         if needsSave:
             secretsConf.save()
