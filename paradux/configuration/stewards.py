@@ -94,7 +94,8 @@ class StewardsConfiguration(Configuration):
         else:
             t = "You currently have {0:d} steward(s) configured. They are:\n".format(len(self.stewards))
             for stewardId, steward in self.stewards.items():
-                t += "* Name:           {0:s}\n".format( steward.name )
+                t += "* ID:             {0:s}\n".format( stewardId )
+                t += "  Name:           {0:s}\n".format( steward.name )
                 t += "  Address:        {0:s}\n".format( "<not set>" if steward.address      is None else steward.address )
                 t += "  Contact e-mail: {0:s}\n".format( "<not set>" if steward.contactEmail is None else steward.contactEmail )
                 t += "  Contact phone:  {0:s}\n".format( "<not set>" if steward.contactPhone is None else steward.contactPhone )
