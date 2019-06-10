@@ -32,7 +32,7 @@ def run(args, settings) :
     finally:
         settings.cleanup()
 
-    return True
+    return 0
 
 
 

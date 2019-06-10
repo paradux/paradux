@@ -152,7 +152,7 @@ def fatal(*args):
         if LOG.isEnabledFor(logging.CRITICAL):
             LOG.critical(_constructMsg(False, LOG.isEnabledFor(logging.DEBUG), args))
 
-    raise SystemExit(1) # Don't call exit() because that will close stdin
+    raise SystemExit(255) # Don't call exit() because that will close stdin
 
 
 def isFatalActive():

@@ -57,7 +57,7 @@ def run(args, settings) :
     finally:
         settings.cleanup()
 
-    return True
+    return 0
 
 
 def addSubParser(parentParser, cmdName) :

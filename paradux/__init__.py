@@ -48,7 +48,7 @@ def run():
     if cmdName in cmdNames:
         try :
             ret = cmds[cmdName].run(args, settings)
-            exit( 0 if ret == 1 else 1 )
+            exit( ret )
 
         except Exception as e:
             paradux.logging.fatal( str(type(e)), '--', e )
