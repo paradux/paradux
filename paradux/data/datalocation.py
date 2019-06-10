@@ -63,6 +63,11 @@ def parseDataInventoryLocationJson(j):
     return DataInventoryLocation(name, description, url, credentials)
 
 
+def _parseCredentialsJson(j):
+    # FIXME
+    return None
+
+
 def _parseFrequencyJson(j):
     # FIXME
     return None
