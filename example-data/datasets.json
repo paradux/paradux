@@ -4,14 +4,25 @@
             "name"        : "joe's important PC data",                   # required
             "description" : "most of his important documents live here", # optional
             "source" : {
+                "name" : "joe's home directory on his laptop",       # optional
+                "description" : "...",                               # optional
+                "url" : "scp://laptop.local/~joe"                    # required
+                "credentials" : {
+                    "ssh-user" : "me",
+                    "ssh-key"  : "ssh-rsa ..."
+                }
             },
             "destinations" : [
                 {
-                    "name" : "joe's home directory on his laptop",       # optional
-                    "description" : "...",                               # optional
-                    "url" : "scp://laptop.local/~joe"                    # required
-                },
-                ...
+                    "name" : "Amazon S3", # optional
+                    "url" : "s3://mybucket/home-myself", # required
+                    "credentials" : {
+                        "aws-access-key" : "Axxx",
+                        "aws-secret-key" : "Axxx"
+                    },
+                    "frequency" : 86400,
+                    "encryption" : ...
+                }, ...
             ]
         },
         ...
