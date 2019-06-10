@@ -14,16 +14,17 @@ class StewardPackage:
     stewardShare: the share-related information conveyed to the steward
     mersenne: the mersenn-th Mersenne prime number was used
     minStewards: the minimum number of stewards required to restore
+    dataInventoryConf: the configuration of the data inventory
     paraduxVersion: the version of paradux that was used
     """
-    def __init__(self, user, steward, stewardShare, mersenne, minStewards, paraduxVersion):
-        self.user           = user
-        self.steward        = steward
-        self.stewardShare   = stewardShare
-        self.mersenne       = mersenne
-        self.minStewards    = minStewards
-        self.paraduxVersion = paraduxVersion
-        self.configurationLocations = None # FIXME
+    def __init__(self, user, steward, stewardShare, mersenne, minStewards, dataInventoryConf, paraduxVersion):
+        self.user              = user
+        self.steward           = steward
+        self.stewardShare      = stewardShare
+        self.mersenne          = mersenne
+        self.minStewards       = minStewards
+        self.dataInventoryConf = dataInventoryConf
+        self.paraduxVersion    = paraduxVersion
 
 
     def asText(self):
@@ -34,7 +35,8 @@ class StewardPackage:
         return: plain text
         """
 
-        shamirShare = self.stewardShare.getShamirShare()
+        shamirShare            = self.stewardShare.getShamirShare()
+        dataInventoryLocations = self.dataInventoryConf.getDataInventoryLocations()
 
         ret = """Dear {steward.name:s},
 
@@ -79,13 +81,17 @@ Your recovery fragment:
                 mersenne    = self.mersenne,
                 minStewards = self.minStewards)
 
-        if self.configurationLocations is not None and len(self.configurationLocations) > 0:
-            formattedConfigurationLocations = "\n".join(self.configurationLocations)
+        ret += """
+Locations of the data inventory:
+"""
+        if dataInventoryLocations is not None and len(dataInventoryLocations) > 0:
+            for dataInventoryLocation in dataInventoryLocations:
+                ret += """    {url:s}
+""".format(url = dataInventoryLocation.url)
 
-            ret += """
-Locations for recovery data:
-{0:s}
-""".format(formattedConfigurationLocations)
+        else:
+            ret += """    <currently none known>
+"""
 
         return ret
 

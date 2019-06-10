@@ -6,6 +6,7 @@
 
 import os
 import os.path
+import paradux.configuration.datainventory
 import paradux.configuration.datasets
 import paradux.configuration.secrets
 import paradux.configuration.stewards
@@ -62,18 +63,21 @@ class Settings:
         self.crypt_device_path = '/dev/mapper/' + self.crypt_device_name      # path name of the device created by cryptsetup
         self.image_mount_point = self.directory + '/configuration'            # mount point for the image
 
-        self.datasets_config_file      = self.image_mount_point + '/datasets.json'      # configuration JSON for datasets
-        self.temp_datasets_config_file = self.image_mount_point + '/datasets.temp.json' # being edited configuration JSON for datasets
-        self.stewards_config_file      = self.image_mount_point + '/stewards.json'      # configuration JSON for stewards
-        self.temp_stewards_config_file = self.image_mount_point + '/stewards.temp.json' # being edited configuration JSON for stewards
-        self.user_config_file          = self.image_mount_point + '/user.json'          # configuration JSON for user info
-        self.temp_user_config_file     = self.image_mount_point + '/user.tmp.json'      # being edited configuration JSON for user info
-        self.secrets_config_file       = self.image_mount_point + '/secrets.json'       # configuration JSON for secrets
+        self.data_inventory_config_file      = self.image_mount_point + '/datainventory.json'      # configuration JSON for data inventory locations
+        self.temp_data_inventory_config_file = self.image_mount_point + '/datainventory.temp.json' # configuration JSON for datainventory
+        self.datasets_config_file            = self.image_mount_point + '/datasets.json'           # configuration JSON for datasets
+        self.temp_datasets_config_file       = self.image_mount_point + '/datasets.temp.json'      # being edited configuration JSON for datasets
+        self.secrets_config_file             = self.image_mount_point + '/secrets.json'            # configuration JSON for secrets
+        self.stewards_config_file            = self.image_mount_point + '/stewards.json'           # configuration JSON for stewards
+        self.temp_stewards_config_file       = self.image_mount_point + '/stewards.temp.json'      # being edited configuration JSON for stewards
+        self.user_config_file                = self.image_mount_point + '/user.json'               # configuration JSON for user info
+        self.temp_user_config_file           = self.image_mount_point + '/user.tmp.json'           # being edited configuration JSON for user info
 
-        self.datasetsConfiguration = None # allocated as needed
-        self.stewardsConfiguration = None # allocated as needed
-        self.userConfiguration     = None # allocated as needed
-        self.secretsConfiguration  = None # allocated as needed
+        self.dataInventoryConfiguration = None # allocated as needed
+        self.datasetsConfiguration      = None # allocated as needed
+        self.secretsConfiguration       = None # allocated as needed
+        self.stewardsConfiguration      = None # allocated as needed
+        self.userConfiguration          = None # allocated as needed
 
 
     def checkCanCreateImage(self):
@@ -135,10 +139,24 @@ class Settings:
         """
         paradux.logging.info('Populating with initial default data')
 
+        paradux.configuration.datainventory.saveInitial(self.data_inventory_config_file)
         paradux.configuration.datasets.saveInitial(self.datasets_config_file)
+        paradux.configuration.secrets.createAndSaveInitial(nbits, recoverySecret, min_stewards, self.secrets_config_file)
         paradux.configuration.stewards.saveInitial(self.stewards_config_file)
         paradux.configuration.user.saveInitial(self.user_config_file)
-        paradux.configuration.secrets.createAndSaveInitial(nbits, recoverySecret, min_stewards, self.secrets_config_file)
+
+
+    def getDataInventoryConfiguration(self):
+        """
+        Obtain the current configuration of the data inventory locations.
+
+        return: DataInventoryConfiguration
+        """
+        paradux.logging.trace('getDataInventoryConfiguration')
+
+        if self.dataInventoryConfiguration == None:
+            self.dataInventoryConfiguration = paradux.configuration.datainventory.createFromFile( self.data_inventory_config_file, self.temp_data_inventory_config_file )
+        return self.dataInventoryConfiguration
 
 
     def getDatasetsConfiguration(self):
@@ -150,6 +168,17 @@ class Settings:
         if self.datasetsConfiguration == None:
             self.datasetsConfiguration = paradux.configuration.datasets.createFromFile( self.datasets_config_file, self.temp_datasets_config_file )
         return self.datasetsConfiguration
+
+
+    def getSecretsConfiguration(self):
+        """
+        Obtain the current configuration of the secrets.
+
+        return: SecretsConfiguration
+        """
+        if self.secretsConfiguration == None:
+            self.secretsConfiguration = paradux.configuration.secrets.createFromFile( self.secrets_config_file )
+        return self.secretsConfiguration
 
 
     def getStewardsConfiguration(self):
@@ -174,17 +203,6 @@ class Settings:
         return self.userConfiguration
 
 
-    def getSecretsConfiguration(self):
-        """
-        Obtain the current configuration of the secrets.
-
-        return: SecretsConfiguration
-        """
-        if self.secretsConfiguration == None:
-            self.secretsConfiguration = paradux.configuration.secrets.createFromFile( self.secrets_config_file )
-        return self.secretsConfiguration
-
-
     def getStewardPackages(self):
         """
         Obtain a list of StewardPackage ready for export.
@@ -193,10 +211,11 @@ class Settings:
         """
         paradux.logging.trace('getStewardPackages')
 
-        stewardsConf = self.getStewardsConfiguration()
-        userConf     = self.getUserConfiguration()
-        secretsConf  = self.getSecretsConfiguration()
-        version      = paradux.version()
+        stewardsConf      = self.getStewardsConfiguration()
+        userConf          = self.getUserConfiguration()
+        secretsConf       = self.getSecretsConfiguration()
+        dataInventoryConf = self.getDataInventoryConfiguration()
+        version           = paradux.version()
 
         ret       = dict()
         needsSave = False
@@ -207,7 +226,14 @@ class Settings:
                 stewardShare = secretsConf.issueStewardShare(stewardId)
                 needsSave = True
 
-            ret[stewardId] = StewardPackage(userConf.getUser(), steward, stewardShare, secretsConf.getMersenne(), secretsConf.getMinStewards(), version)
+            ret[stewardId] = StewardPackage(
+                    userConf.getUser(),
+                    steward,
+                    stewardShare,
+                    secretsConf.getMersenne(),
+                    secretsConf.getMinStewards(),
+                    dataInventoryConf,
+                    version)
 
         if needsSave:
             secretsConf.save()

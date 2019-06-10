@@ -45,6 +45,24 @@ def parseDestinationDataLocationJson(j):
     return DestinationDataLocation(name, description, url, credentials, frequency, encryption)
 
 
+def parseDataInventoryLocationJson(j):
+    """
+    Helper function to parse a JSON data inventory location into an instance
+    of DataInventoryLocation
+
+    j: JSON fragment
+    return: instance of DataInventoryLocation
+    """
+    paradux.logging.trace('parseDataInventoryLocationJson')
+
+    name        = j['name']                               if 'name'        in j else None
+    description = j['description']                        if 'description' in j else None
+    url         = j['url']                                # required
+    credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
+
+    return DataInventoryLocation(name, description, url, credentials)
+
+
 def _parseFrequencyJson(j):
     # FIXME
     return None
@@ -75,8 +93,8 @@ class SourceDataLocation(DataLocation):
     """
     A DataLocation that is used as a source in a Dataset.
     """
-    def __init__(self, name, description, url, credentials):
-        super().__init__(name, description, url, credentials)
+    def __init__(self, name, description, url, downloadCredentials):
+        super().__init__(name, description, url, downloadCredentials)
 
 
 class DestinationDataLocation(DataLocation):
@@ -86,8 +104,18 @@ class DestinationDataLocation(DataLocation):
     frequency: specifies how frequently a backup is created to this destination
     encryption_info: specifies how the backup is encrypted
     """
-    def __init__(self, name, description, url, credentials, frequency, encryption_info):
-        super().__init__(name, description, url, credentials )
+    def __init__(self, name, description, url, uploadCredentials, frequency, encryption_info):
+        super().__init__(name, description, url, uploadCredentials )
 
         self.frequency       = frequency
         self.encryption_info = encryption_info
+
+
+class DataInventoryLocation(DataLocation):
+    """
+    A DataLocation that is used as place where to deposit copies of
+    the data inventory
+    """
+    def __init__(self, name, description, url, uploadCredentials):
+        super().__init__(name, description, url, uploadCredentials)
+
