@@ -87,7 +87,7 @@ Locations of the paradux metadata:
         if metadataLocations is not None and len(metadataLocations) > 0:
             for metadataLocation in metadataLocations:
                 ret += """    {url:s}
-""".format(url = metadataLocation.getUrl())
+""".format(url = str(metadataLocation))
 
         else:
             ret += """    <currently none known>

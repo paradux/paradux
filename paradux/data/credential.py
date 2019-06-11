@@ -90,7 +90,7 @@ class SshCredentials(Credentials):
 
 
     def isSuitableForProtocol(self, proto):
-        return 'scp' == proto
+        return 'scp' == proto or 'rsync+ssh' == proto
 
 
 class AwsApiCredentials(Credentials):

@@ -114,7 +114,7 @@ class DataLocation:
             return self.url.geturl()
 
         if self.name is not None:
-            return self.named
+            return self.name
 
         return '<underspecified data location>'
 

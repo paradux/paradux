@@ -67,4 +67,4 @@ def version():
 
     return: version string
     """
-    return "0.1" # return as string
+    return "0.2" # return as string

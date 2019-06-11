@@ -142,7 +142,7 @@ class Settings:
         """
         paradux.logging.info('Populating with initial default data')
 
-        paradux.configuration.metadata.saveInitial(self.metadata_locations_config_file)
+        paradux.configuration.metadatalocations.saveInitial(self.metadata_locations_config_file)
         paradux.configuration.datasets.saveInitial(self.datasets_config_file)
         paradux.configuration.secrets.createAndSaveInitial(nbits, recoverySecret, min_stewards, self.secrets_config_file)
         paradux.configuration.stewards.saveInitial(self.stewards_config_file)

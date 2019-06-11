@@ -87,13 +87,14 @@ class MetadataLocationsConfiguration(Configuration):
         return: plain text
         """
         if self.metadataLocations is not None and len(self.metadataLocations) > 0:
+            t = ''
             for metadataLocation in self.metadataLocations:
                 if metadataLocation.name is not None:
-                    t  = "* Name:        {0:s}\n".format(metadataLocation.name)
+                    t += "* Name:        {0:s}\n".format(metadataLocation.name)
                     t += "  URL:         {0:s}\n".format(str(metadataLocation))
                     t += "  Description: {0:s}\n".format("<not set>" if metadataLocation.description is None else metadataLocation.description)
                 else:
-                    t  = "* URL:         {0:s}\n".format(str(metadataLocation))
+                    t += "* URL:         {0:s}\n".format(str(metadataLocation))
                     t += "  Description: {0:s}\n".format("<not set>" if metadataLocation.description is None else metadataLocation.description)
 
         else:
