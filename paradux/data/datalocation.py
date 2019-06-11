@@ -4,6 +4,7 @@
 # All rights reserved. License: see package.
 #
 
+import paradux.data.credential
 import paradux.logging
 
 
@@ -17,10 +18,11 @@ def parseSourceDataLocationJson(j):
     """
     paradux.logging.trace('parseSourceDataLocationJson')
 
-    name        = j['name']                               if 'name'        in j else None
-    description = j['description']                        if 'description' in j else None
-    url         = j['url']                                # required
-    credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
+    name        = j['name']        if 'name'        in j else None
+    description = j['description'] if 'description' in j else None
+    url         = j['url']         # required
+
+    credentials = paradux.data.credential.parseCredentialsJson(j['credentials']) if 'credentials' in j else None
 
     return SourceDataLocation(name, description, url, credentials)
 
@@ -38,9 +40,10 @@ def parseDestinationDataLocationJson(j):
     name        = j['name']                               if 'name'        in j else None
     description = j['description']                        if 'description' in j else None
     url         = j['url']                                # required
-    credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
     frequency   = _parseFrequencyJson(  j['frequency']  ) if 'frequency'   in j else None
     encryption  = _parseEncryptionJson( j['encryption'] ) if 'encryption'  in j else None
+
+    credentials = paradux.data.credential.parseCredentialsJson(j['credentials']) if 'credentials' in j else None
 
     return DestinationDataLocation(name, description, url, credentials, frequency, encryption)
 
@@ -55,17 +58,12 @@ def parseMetadataLocationJson(j):
     """
     paradux.logging.trace('parseMetadataLocationJson')
 
-    name        = j['name']                               if 'name'        in j else None
-    description = j['description']                        if 'description' in j else None
-    url         = j['url']                                # required
-    credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
+    name        = j['name']        if 'name'        in j else None
+    description = j['description'] if 'description' in j else None
+    url         = j['url']         # required
+    credentials = paradux.data.credential.parseCredentialsJson(j['credentials']) if 'credentials' in j else None
 
     return MetadataLocation(name, description, url, credentials)
-
-
-def _parseCredentialsJson(j):
-    # FIXME
-    return None
 
 
 def _parseFrequencyJson(j):

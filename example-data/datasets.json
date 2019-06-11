@@ -9,7 +9,7 @@
                 "url" : "scp://laptop.local/~joe"                    # required
                 "credentials" : {
                     "ssh-user" : "me",
-                    "ssh-key"  : "ssh-rsa ..."
+                    "ssh-private-key"  : "ssh-rsa ..."
                 }
             },
             "destinations" : [

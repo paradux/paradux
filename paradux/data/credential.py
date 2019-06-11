@@ -17,8 +17,12 @@ def parseCredentialsJson(j):
     """
     paradux.logging.trace('parseCredentialsJson')
 
-    # FIXME
-    return None
+    if 'ssh-user' in j and 'ssh-private-key' in j:
+        return SshCredentials( j['ssh-user'], j['ssh-private-key'] )
+    elif 'aws-access-key' in j and 'aws-secret-key' in j:
+        return AwsApiCredentials( j['aws-access-key'], j['aws-secret-key'] )
+    else:
+        raise ValueError( 'Unknown credential type' )
 
 
 class Credentials:
@@ -63,13 +67,13 @@ class AwsApiCredentials(Credentials):
     A pair of API key and secret access key to access Amazon Web Services via
     its API.
     """
-    def __init__(self, apiKey, secretApiKey):
+    def __init__(self, awsAccessKey, awsSecretKey):
         """
         Constructor.
 
-        apiKey: the API key
-        secretAccessKey: the secret access key for the API
+        awsAccessKey: the AWS access key
+        awsSecretKey: the AWS secret key
         """
-        self.apiKey       = apiKey
-        self.secretApiKey = secretApiKey
+        self.awsAccessKey = awsAccessKey
+        self.awsSecretKey = awsSecretKey
 
