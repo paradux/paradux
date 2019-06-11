@@ -26,16 +26,25 @@ def run(args, settings) :
         if len(metadataLocations) == 0:
             paradux.logging.fatal( "No metadata locations have been defined. To configure, run 'paradux edit-metadata-locations'." )
 
+        settings.cleanup()
+
         # Export into a private temp directory
         tmpDir  = tempfile.mkdtemp(prefix='paradux-')
         tmpFile = tmpDir + '/paradux.img'
         settings.exportMetadataToFile(tmpFile)
 
+        uploadCount = 0
         for metadataLocation in metadataLocations:
-            settings.uploadToDataLocation(tmpFile, metadataLocation)
+            if settings.uploadToDataLocation(tmpFile, metadataLocation):
+                uploadCount += 1
+
+        if uploadCount == 0:
+            paradux.logging.error( 'No uploads performed; you cannot recover in case of a personal data disaster' )
+        else:
+            print( 'Published to ' + str(uploadCount) + ' locations.' )
 
     finally:
-        settings.cleanup()
+        settings.cleanup() # This probably will noop because we did it before, but might not in case of an error
 
         if tmpDir is not None and os.path.isdir(tmpDir):
             for f in os.listdir(tmpDir):

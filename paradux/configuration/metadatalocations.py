@@ -89,12 +89,12 @@ class MetadataLocationsConfiguration(Configuration):
         if self.metadataLocations is not None and len(self.metadataLocations) > 0:
             for metadataLocation in self.metadataLocations:
                 if metadataLocation.name is not None:
-                    t  = "* Name:        {0:s}\n".format( metadataLocation.name )
-                    t += "  URL:         {0:s}\n".format( metadataLocation.url )
-                    t += "  Description: {0:s}\n".format( "<not set>" if metadataLocation.description is None else metadataLocation.description )
+                    t  = "* Name:        {0:s}\n".format(metadataLocation.name)
+                    t += "  URL:         {0:s}\n".format(str(metadataLocation))
+                    t += "  Description: {0:s}\n".format("<not set>" if metadataLocation.description is None else metadataLocation.description)
                 else:
-                    t  = "* URL:         {0:s}\n".format( metadataLocation.url )
-                    t += "  Description: {0:s}\n".format( "<not set>" if metadataLocation.description is None else metadataLocation.description )
+                    t  = "* URL:         {0:s}\n".format(str(metadataLocation))
+                    t += "  Description: {0:s}\n".format("<not set>" if metadataLocation.description is None else metadataLocation.description)
 
         else:
             t = """You currently have 0 metadata locations configured. To configure, run 'paradux edit-metadata-locations'\n"""

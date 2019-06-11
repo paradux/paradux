@@ -4,6 +4,7 @@
 # All rights reserved. License: see package.
 #
 
+import importlib
 import os
 import os.path
 import paradux.configuration.datasets
@@ -11,6 +12,7 @@ import paradux.configuration.metadatalocations
 import paradux.configuration.secrets
 import paradux.configuration.stewards
 import paradux.configuration.user
+import paradux.datatransfer
 import paradux.logging
 from paradux.stewardpackage import StewardPackage
 import paradux.utils
@@ -78,6 +80,7 @@ class Settings:
         self.secretsConfiguration           = None # allocated as needed
         self.stewardsConfiguration          = None # allocated as needed
         self.userConfiguration              = None # allocated as needed
+        self.dataTransferProtocols          = None # allocated as needed
 
 
     def checkCanCreateImage(self):
@@ -336,9 +339,17 @@ class Settings:
 
         localFile: the local file
         dataLocation: the location to upload the local file to
+        return: True if upload was performed successfully
         """
-        print( "FIXME: would be uploading: " + localFile + " to " + dataLocation.url )
-        return 0
+        ret = False;
+        protocol = self._findDataTransferProtocolFor(dataLocation)
+        if protocol is None:
+            paradux.logging.warning( 'No support for this upload protocol:', dataLocation, '-- skipping')
+        else:
+            paradux.logging.info( 'Uploading to:', dataLocation)
+            ret = protocol.upload(localFile, dataLocation)
+
+        return ret
 
 
     def cleanup(self):
@@ -591,6 +602,28 @@ guess, and DO NOT write it down anywhere.
             paradux.logging.fatal('cryptsetup luksAddKey failed')
 
         _deleteTempFile(recoveryKeyFile)
+
+
+    def _findDataTransferProtocolFor(self, dataLocation):
+        """
+        Find the Python module that knows how to upload data to this
+        data location.
+
+        dataLocation: the data location to upload to
+        return: the module, or None if not foudn
+        """
+        if self.dataTransferProtocols is None:
+            self.dataTransferProtocols = dict()
+            for moduleName in paradux.utils.findSubmodules(paradux.datatransfer):
+                mod = importlib.import_module('paradux.datatransfer.' + moduleName)
+                self.dataTransferProtocols[moduleName] = mod
+
+        proto = dataLocation.url.scheme
+        for dataTransferProtocol in self.dataTransferProtocols.values():
+            if dataTransferProtocol.supportsProtocol(proto):
+                return dataTransferProtocol
+
+        return None
 
 
 def _secretToPassphrase(secret):

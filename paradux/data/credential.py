@@ -4,32 +4,54 @@
 # All rights reserved. License: see package.
 #
 
+import abc
 import paradux.logging
 
 
-def parseCredentialsJson(j):
+def parseCredentialsJson(j, url=None):
     """
     Helper function to parse a JSON credentials definition into an instance
-    of the right subclass of Credentials.
+    of the right subclass of Credentials. If u is given, also check that
+    these Credentials work with the URL with this protocol.
 
     j: JSON fragment
+    url: parsed URL
     return: instance of a subclass of Credentials
     """
     paradux.logging.trace('parseCredentialsJson')
 
-    if 'ssh-user' in j and 'ssh-private-key' in j:
-        return SshCredentials( j['ssh-user'], j['ssh-private-key'] )
+    ret = None
+    if 'user' in j and 'password' in j:
+        ret = PasswordCredentials( j['user'], j['password'] )
+
+    elif 'ssh-user' in j and 'ssh-private-key' in j:
+        ret = SshCredentials( j['ssh-user'], j['ssh-private-key'] )
+
     elif 'aws-access-key' in j and 'aws-secret-key' in j:
-        return AwsApiCredentials( j['aws-access-key'], j['aws-secret-key'] )
-    else:
+        ret = AwsApiCredentials( j['aws-access-key'], j['aws-secret-key'] )
+
+    if ret is None:
         raise ValueError( 'Unknown credential type' )
+
+    if url is not None:
+        if ret is not None and not ret.isSuitableForProtocol(url.scheme):
+            raise ValueError('Credential type not suitable for protocol ' + url.scheme + ': ' + str(type(ret)))
+
+    return ret
 
 
 class Credentials:
     """
     Abstract superclass for all types of username/password and the like
     """
-    pass
+
+    @abc.abstractmethod
+    def isSuitableForProtocol(self, proto):
+        """
+        Returns True if this CredentialType is suitable for the provided
+        data transfer protocol, e.g. 'scp'.
+        """
+        pass
 
 
 class PasswordCredentials(Credentials):
@@ -47,6 +69,11 @@ class PasswordCredentials(Credentials):
         self.usersecret = usersecret
 
 
+    def isSuitableForProtocol(self, proto):
+        # FIXME
+        return False
+
+
 class SshCredentials(Credentials):
     """
     A username/private key pair combination
@@ -60,6 +87,10 @@ class SshCredentials(Credentials):
         """
         self.username    = username
         self.private_key = private_key
+
+
+    def isSuitableForProtocol(self, proto):
+        return 'scp' == proto
 
 
 class AwsApiCredentials(Credentials):
@@ -76,4 +107,8 @@ class AwsApiCredentials(Credentials):
         """
         self.awsAccessKey = awsAccessKey
         self.awsSecretKey = awsSecretKey
+
+
+    def isSuitableForProtocol(self, proto):
+        return 's3' == proto
 

@@ -87,9 +87,9 @@ class DatasetsConfiguration(Configuration):
                 if dataset.description != None:
                     t += "  description:  {0:s}\n".format(dataset.description)
                 if dataset.source is not None:
-                    t += "  source:       {0:s}\n".format(dataset.source.url)
+                    t += "  source:       {0:s}\n".format(str(dataset.source))
                 for destination in dataset.destinations:
-                    t += "  destination:  {0:s}\n".format(destination.url)
+                    t += "  destination:  {0:s}\n".format(str(destination))
 
         return t
 

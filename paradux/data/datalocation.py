@@ -6,6 +6,7 @@
 
 import paradux.data.credential
 import paradux.logging
+from urllib.parse import urlparse
 
 
 def parseSourceDataLocationJson(j):
@@ -18,11 +19,11 @@ def parseSourceDataLocationJson(j):
     """
     paradux.logging.trace('parseSourceDataLocationJson')
 
-    name        = j['name']        if 'name'        in j else None
-    description = j['description'] if 'description' in j else None
-    url         = j['url']         # required
+    name        = j['name']           if 'name'        in j else None
+    description = j['description']    if 'description' in j else None
+    url         = _parseUrl(j['url']) # required
 
-    credentials = paradux.data.credential.parseCredentialsJson(j['credentials']) if 'credentials' in j else None
+    credentials = paradux.data.credential.parseCredentialsJson(j['credentials'], url) if 'credentials' in j else None
 
     return SourceDataLocation(name, description, url, credentials)
 
@@ -39,11 +40,11 @@ def parseDestinationDataLocationJson(j):
 
     name        = j['name']                               if 'name'        in j else None
     description = j['description']                        if 'description' in j else None
-    url         = j['url']                                # required
+    url         = _parseUrl(j['url'])                     if 'url'         in j else None
     frequency   = _parseFrequencyJson(  j['frequency']  ) if 'frequency'   in j else None
     encryption  = _parseEncryptionJson( j['encryption'] ) if 'encryption'  in j else None
 
-    credentials = paradux.data.credential.parseCredentialsJson(j['credentials']) if 'credentials' in j else None
+    credentials = paradux.data.credential.parseCredentialsJson(j['credentials'], url) if 'credentials' in j else None
 
     return DestinationDataLocation(name, description, url, credentials, frequency, encryption)
 
@@ -58,12 +59,22 @@ def parseMetadataLocationJson(j):
     """
     paradux.logging.trace('parseMetadataLocationJson')
 
-    name        = j['name']        if 'name'        in j else None
-    description = j['description'] if 'description' in j else None
-    url         = j['url']         # required
-    credentials = paradux.data.credential.parseCredentialsJson(j['credentials']) if 'credentials' in j else None
+    name        = j['name']           if 'name'        in j else None
+    description = j['description']    if 'description' in j else None
+    url         = _parseUrl(j['url']) # required
+    credentials = paradux.data.credential.parseCredentialsJson(j['credentials'], url) if 'credentials' in j else None
 
     return MetadataLocation(name, description, url, credentials)
+
+
+def _parseUrl(u):
+    """
+    Parse a URL.
+
+    u: URL as string
+    return: ParseResult
+    """
+    return urlparse(u)
 
 
 def _parseFrequencyJson(j):
@@ -76,13 +87,14 @@ def _parseEncryptionJson(j):
     return None
 
 
+
 class DataLocation:
     """
     Represents the location of a bunch of data somewhere.
 
     name: name used to refer to it within paradux (required)
     description: text that reminds the user about this data location (optional)
-    url: how to access this data location (required)
+    url: how to access this data location (required), as a parsed URL
     credentials: access credentials (optional)
     """
     def __init__(self, name, description, url, credentials):
@@ -90,6 +102,21 @@ class DataLocation:
         self.description = description
         self.url         = url
         self.credentials = credentials
+
+
+    """
+    Convert to string, to be shown to the user
+
+    return: string
+    """
+    def __str__(self):
+        if self.url is not None:
+            return self.url.geturl()
+
+        if self.name is not None:
+            return self.named
+
+        return '<underspecified data location>'
 
 
 class SourceDataLocation(DataLocation):
