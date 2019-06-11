@@ -19,7 +19,7 @@ def run(args, settings) :
     try :
         settings.mountImage()
 
-        conf = settings.getDataInventoryConfiguration()
+        conf = settings.getMetadataLocationsConfiguration()
         if args.clean:
             conf.abortTempConfiguration()
 
@@ -49,5 +49,5 @@ def addSubParser(parentParser, cmdName) :
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Edit the data inventory locations in a paradux configuration.' )
+    parser = parentParser.add_parser( cmdName, help='Edit the metadata locations in a paradux configuration.' )
     parser.add_argument('--clean', action='store_const', const=True, help='Abandon previous edits and start from current configuration')

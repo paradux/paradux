@@ -14,17 +14,17 @@ class StewardPackage:
     stewardShare: the share-related information conveyed to the steward
     mersenne: the mersenn-th Mersenne prime number was used
     minStewards: the minimum number of stewards required to restore
-    dataInventoryConf: the configuration of the data inventory
+    metadataLocationsConf: the configuration of the metadata locations
     paraduxVersion: the version of paradux that was used
     """
-    def __init__(self, user, steward, stewardShare, mersenne, minStewards, dataInventoryConf, paraduxVersion):
-        self.user              = user
-        self.steward           = steward
-        self.stewardShare      = stewardShare
-        self.mersenne          = mersenne
-        self.minStewards       = minStewards
-        self.dataInventoryConf = dataInventoryConf
-        self.paraduxVersion    = paraduxVersion
+    def __init__(self, user, steward, stewardShare, mersenne, minStewards, metadataLocationsConf, paraduxVersion):
+        self.user                  = user
+        self.steward               = steward
+        self.stewardShare          = stewardShare
+        self.mersenne              = mersenne
+        self.minStewards           = minStewards
+        self.metadataLocationsConf = metadataLocationsConf
+        self.paraduxVersion        = paraduxVersion
 
 
     def asText(self):
@@ -35,8 +35,8 @@ class StewardPackage:
         return: plain text
         """
 
-        shamirShare            = self.stewardShare.getShamirShare()
-        dataInventoryLocations = self.dataInventoryConf.getDataInventoryLocations()
+        shamirShare       = self.stewardShare.getShamirShare()
+        metadataLocations = self.metadataLocationsConf.getMetadataLocations()
 
         ret = """Dear {steward.name:s},
 
@@ -82,12 +82,12 @@ Your recovery fragment:
                 minStewards = self.minStewards)
 
         ret += """
-Locations of the data inventory:
+Locations of the paradux metadata:
 """
-        if dataInventoryLocations is not None and len(dataInventoryLocations) > 0:
-            for dataInventoryLocation in dataInventoryLocations:
+        if metadataLocations is not None and len(metadataLocations) > 0:
+            for metadataLocation in metadataLocations:
                 ret += """    {url:s}
-""".format(url = dataInventoryLocation.url)
+""".format(url = metadataLocation.url)
 
         else:
             ret += """    <currently none known>

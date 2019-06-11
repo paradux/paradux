@@ -16,11 +16,7 @@ def run(args, settings) :
     settings: settings for this paradux instance
     """
     try :
-        settings.mountImage()
-
-        conf = settings.getDataInventoryConfiguration()
-
-        print( conf.asText() )
+        settings.exportMetadataToFile(args.file)
 
     finally:
         settings.cleanup()
@@ -34,4 +30,5 @@ def addSubParser(parentParser, cmdName) :
     parentParser: the parent argparse parser
     cmdName: name of this command
     """
-    parser = parentParser.add_parser( cmdName, help='Print the current status of the data inventory locations of this paradux configuration.' )
+    parser = parentParser.add_parser( cmdName, help='Export the paradux metadata without the everyday passphrase.' )
+    parser.add_argument( '--file', action='store', required=True, help='The file to export to.' )

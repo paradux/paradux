@@ -45,22 +45,22 @@ def parseDestinationDataLocationJson(j):
     return DestinationDataLocation(name, description, url, credentials, frequency, encryption)
 
 
-def parseDataInventoryLocationJson(j):
+def parseMetadataLocationJson(j):
     """
-    Helper function to parse a JSON data inventory location into an instance
-    of DataInventoryLocation
+    Helper function to parse a JSON metadata location into an instance
+    of MetadataLocation
 
     j: JSON fragment
-    return: instance of DataInventoryLocation
+    return: instance of MetadataLocation
     """
-    paradux.logging.trace('parseDataInventoryLocationJson')
+    paradux.logging.trace('parseMetadataLocationJson')
 
     name        = j['name']                               if 'name'        in j else None
     description = j['description']                        if 'description' in j else None
     url         = j['url']                                # required
     credentials = _parseCredentialsJson(j['credentials']) if 'credentials' in j else None
 
-    return DataInventoryLocation(name, description, url, credentials)
+    return MetadataLocation(name, description, url, credentials)
 
 
 def _parseCredentialsJson(j):
@@ -116,10 +116,10 @@ class DestinationDataLocation(DataLocation):
         self.encryption_info = encryption_info
 
 
-class DataInventoryLocation(DataLocation):
+class MetadataLocation(DataLocation):
     """
     A DataLocation that is used as place where to deposit copies of
-    the data inventory
+    the paradux metadata
     """
     def __init__(self, name, description, url, uploadCredentials):
         super().__init__(name, description, url, uploadCredentials)

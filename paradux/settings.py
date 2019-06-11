@@ -6,8 +6,8 @@
 
 import os
 import os.path
-import paradux.configuration.datainventory
 import paradux.configuration.datasets
+import paradux.configuration.metadatalocations
 import paradux.configuration.secrets
 import paradux.configuration.stewards
 import paradux.configuration.user
@@ -63,21 +63,21 @@ class Settings:
         self.crypt_device_path = '/dev/mapper/' + self.crypt_device_name      # path name of the device created by cryptsetup
         self.image_mount_point = self.directory + '/configuration'            # mount point for the image
 
-        self.data_inventory_config_file      = self.image_mount_point + '/datainventory.json'      # configuration JSON for data inventory locations
-        self.temp_data_inventory_config_file = self.image_mount_point + '/datainventory.temp.json' # configuration JSON for datainventory
-        self.datasets_config_file            = self.image_mount_point + '/datasets.json'           # configuration JSON for datasets
-        self.temp_datasets_config_file       = self.image_mount_point + '/datasets.temp.json'      # being edited configuration JSON for datasets
-        self.secrets_config_file             = self.image_mount_point + '/secrets.json'            # configuration JSON for secrets
-        self.stewards_config_file            = self.image_mount_point + '/stewards.json'           # configuration JSON for stewards
-        self.temp_stewards_config_file       = self.image_mount_point + '/stewards.temp.json'      # being edited configuration JSON for stewards
-        self.user_config_file                = self.image_mount_point + '/user.json'               # configuration JSON for user info
-        self.temp_user_config_file           = self.image_mount_point + '/user.tmp.json'           # being edited configuration JSON for user info
+        self.metadata_locations_config_file      = self.image_mount_point + '/metadata.json'      # configuration JSON for metadata locations
+        self.temp_metadata_locations_config_file = self.image_mount_point + '/metadata.temp.json' # being edited configuration JSON for metadata locations
+        self.datasets_config_file                = self.image_mount_point + '/datasets.json'      # configuration JSON for datasets
+        self.temp_datasets_config_file           = self.image_mount_point + '/datasets.temp.json' # being edited configuration JSON for datasets
+        self.secrets_config_file                 = self.image_mount_point + '/secrets.json'       # configuration JSON for secrets
+        self.stewards_config_file                = self.image_mount_point + '/stewards.json'      # configuration JSON for stewards
+        self.temp_stewards_config_file           = self.image_mount_point + '/stewards.temp.json' # being edited configuration JSON for stewards
+        self.user_config_file                    = self.image_mount_point + '/user.json'          # configuration JSON for user info
+        self.temp_user_config_file               = self.image_mount_point + '/user.tmp.json'      # being edited configuration JSON for user info
 
-        self.dataInventoryConfiguration = None # allocated as needed
-        self.datasetsConfiguration      = None # allocated as needed
-        self.secretsConfiguration       = None # allocated as needed
-        self.stewardsConfiguration      = None # allocated as needed
-        self.userConfiguration          = None # allocated as needed
+        self.datasetsConfiguration          = None # allocated as needed
+        self.metadataLocationsConfiguration = None # allocated as needed
+        self.secretsConfiguration           = None # allocated as needed
+        self.stewardsConfiguration          = None # allocated as needed
+        self.userConfiguration              = None # allocated as needed
 
 
     def checkCanCreateImage(self):
@@ -139,24 +139,24 @@ class Settings:
         """
         paradux.logging.info('Populating with initial default data')
 
-        paradux.configuration.datainventory.saveInitial(self.data_inventory_config_file)
+        paradux.configuration.metadata.saveInitial(self.metadata_locations_config_file)
         paradux.configuration.datasets.saveInitial(self.datasets_config_file)
         paradux.configuration.secrets.createAndSaveInitial(nbits, recoverySecret, min_stewards, self.secrets_config_file)
         paradux.configuration.stewards.saveInitial(self.stewards_config_file)
         paradux.configuration.user.saveInitial(self.user_config_file)
 
 
-    def getDataInventoryConfiguration(self):
+    def getMetadataLocationsConfiguration(self):
         """
-        Obtain the current configuration of the data inventory locations.
+        Obtain the current configuration of the metadata locations.
 
-        return: DataInventoryConfiguration
+        return: MetadataLocationsConfiguration
         """
-        paradux.logging.trace('getDataInventoryConfiguration')
+        paradux.logging.trace('getMetadataLocationConfiguration')
 
-        if self.dataInventoryConfiguration == None:
-            self.dataInventoryConfiguration = paradux.configuration.datainventory.createFromFile( self.data_inventory_config_file, self.temp_data_inventory_config_file )
-        return self.dataInventoryConfiguration
+        if self.metadataLocationsConfiguration == None:
+            self.metadataLocationsConfiguration = paradux.configuration.metadatalocations.createFromFile( self.metadata_locations_config_file, self.temp_metadata_locations_config_file )
+        return self.metadataLocationsConfiguration
 
 
     def getDatasetsConfiguration(self):
@@ -211,11 +211,11 @@ class Settings:
         """
         paradux.logging.trace('getStewardPackages')
 
-        stewardsConf      = self.getStewardsConfiguration()
-        userConf          = self.getUserConfiguration()
-        secretsConf       = self.getSecretsConfiguration()
-        dataInventoryConf = self.getDataInventoryConfiguration()
-        version           = paradux.version()
+        stewardsConf          = self.getStewardsConfiguration()
+        userConf              = self.getUserConfiguration()
+        secretsConf           = self.getSecretsConfiguration()
+        metadataLocationsConf = self.getMetadataLocationsConfiguration()
+        version               = paradux.version()
 
         ret       = dict()
         needsSave = False
@@ -232,7 +232,7 @@ class Settings:
                     stewardShare,
                     secretsConf.getMersenne(),
                     secretsConf.getMinStewards(),
-                    dataInventoryConf,
+                    metadataLocationsConf,
                     version)
 
         if needsSave:
@@ -273,7 +273,7 @@ class Settings:
         return self.recovery_key_slot in usedSlots
 
 
-    def exportAll(self,exportFile):
+    def exportMetadataToFile(self,exportFile):
         """
         Export the image to the named file, stripping the everyday passphrase. Also
         performs sanity checks that the recovery secret is still set, while the
@@ -281,7 +281,7 @@ class Settings:
 
         exportFile: the file to export to
         """
-        paradux.logging.info('Exporting configuration with stripped everyday secret')
+        paradux.logging.info('Exporting metadata with stripped everyday secret')
 
         if not self._image_exists():
             raise FileNotFoundError(self.image_file)
@@ -328,6 +328,17 @@ class Settings:
             ubos.logging.fatal( 'Cannot recover: no recovery secret was set on this image' )
 
         self._cryptsetup_recover(recoverySecret)
+
+
+    def uploadToDataLocation(self, localFile, dataLocation):
+        """
+        Copy the local file to the given (remote) data location.
+
+        localFile: the local file
+        dataLocation: the location to upload the local file to
+        """
+        print( "FIXME: would be uploading: " + localFile + " to " + dataLocation.url )
+        return 0
 
 
     def cleanup(self):
@@ -387,7 +398,7 @@ class Settings:
                 + " '" + self.image_file + "'"
                 + " '" + recoveryKeyFile + "'" ):                        # new key is in this file
 
-            _deleteTempKeyFile(recoveryKeyFile)
+            _deleteTempFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksFormat failed')
 
         # Adding a second key requires that the previous key is provided.
@@ -407,10 +418,10 @@ have set those up.
                 + " '" + self.image_file + "'"
                 + " -" ):                                      # read new key from stdin
 
-            _deleteTempKeyFile(recoveryKeyFile)
+            _deleteTempFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksAddKey failed')
 
-        _deleteTempKeyFile(recoveryKeyFile)
+        _deleteTempFile(recoveryKeyFile)
 
 
     def _image_format(self):
@@ -576,10 +587,10 @@ guess, and DO NOT write it down anywhere.
                 + " '" + self.image_file + "'"
                 + " -" ):                                      # read new key from stdin
 
-            _deleteTempKeyFile(recoveryKeyFile)
+            _deleteTempFile(recoveryKeyFile)
             paradux.logging.fatal('cryptsetup luksAddKey failed')
 
-        _deleteTempKeyFile(recoveryKeyFile)
+        _deleteTempFile(recoveryKeyFile)
 
 
 def _secretToPassphrase(secret):
@@ -610,7 +621,7 @@ def _secretToPassphrase(secret):
 
 def _createTempKeyFile(content):
     """
-    Create a temporary file
+    Create a temporary file containing a key.
 
     content: the content of the file
     return: the file name
@@ -623,11 +634,11 @@ def _createTempKeyFile(content):
     return f.name
 
 
-def _deleteTempKeyFile(name):
+def _deleteTempFile(name):
     """
     Factored out here so it's easier to debug.
     """
 
-    paradux.logging.trace( "Unlinking temp key file:", name )
+    paradux.logging.trace( "Unlinking temp file:", name )
     os.unlink(name)
 
