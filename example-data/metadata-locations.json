@@ -1,0 +1,20 @@
+{
+    "locations" : [
+        {
+            "name" : "AWS",
+            "url" : "s3://example/paradux.img",
+            "credentials" : {
+                "aws-access-key" : "axxx",
+                "aws-secret-key" : "axxx"
+            }
+        },
+        {
+            "name" : "Home Server",
+            "url" : "scp://home.local/~user/paradux.img",
+            "credentials" : {
+                "ssh-user" : "user",
+                "ssh-private-key" : "ssh..."
+            }
+        }
+    ]
+}
