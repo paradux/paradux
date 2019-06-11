@@ -19,6 +19,7 @@ setup(name='paradux',
           'paradux',
           'paradux.commands',
           'paradux.configuration',
-          'paradux.data'
+          'paradux.data',
+          'paradux.datatransfer'
       ],
-      zip_safe=False)
+      zip_safe=True)
