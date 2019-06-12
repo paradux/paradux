@@ -16,63 +16,52 @@ choose, so that:
 * no third party can read it
 * there are redundant copies of everything
 * the effort for you to maintain the scheme is minimal, and
-* you can even recover if you remember nothing.
+* you can recover even if you remember nothing and have full amnesia.
 
-It does this with the help of key splitting and trusted friends. It
-applies to personal data, and credentials.
+It does this with the help of cryptographic key splitting and trusted
+friends. It applies to personal data, and secrets like passwords and
+private keys.
 
 ## Linuxfest NorthWest 2019 presentation
 
-We got to [present](https://lfnw.org/conferences/2019/program/proposals/264)
-at Linuxfest Northwest, and they recorded it! Here it is:
+The [Paradux presentation](https://lfnw.org/conferences/2019/program/proposals/264)
+at Linuxfest Northwest 2019 was recorded! Here it is:
 
 [![YouTube video](http://img.youtube.com/vi/Ld85wTh9uZs/0.jpg)](http://www.youtube.com/watch?v=Ld85wTh9uZs "YouTube video")
 
 ## Status
 
-Version 0.1 is here. It's somewhat painful to use (edit JSON files! Manually
-upload data! Bring your terminal skills! Linux only so far.) but the
-most important functionality is working.
+Version 0.2 is here. It's somewhat painful to use (edit JSON files!
+Manually upload data! Bring your terminal skills! Linux only so far.)
+but the most important functionality is working.
 
 Help wanted! File an issue or submitting a PR is best.
 
+## What's new in 0.2
+
+* Renamed some terms: instead of "configuration" it is now "metadata". The
+  names of the commands have changed accordingly
+* Paradux now knows how to upload its metadata via scp and rsync over ssh,
+  with new command `paradux publish-metadata`
+* The data transfer protocols are pluggable, so it is really easy to add
+  new ones. We are looking for somebody to implement "upload to Amazon S3"
+  (see [issue](https://github.com/paradux/paradux/issues/18))
+* To edit or display the metadata locations, there are new commands
+  `paradux edit-metadata-locations` and `paradux status-metadata-locations`
+* Some minor internal refactoring
+* Various bug fixes
+
 ## Howto
 
-[Installation instructions](docs/install.md). Note that paradux depends on
-`cryptsetup` and thus only works on Linux. The edit functionality depends on
-the `EDITOR` environment variable being set to your favorite editor, such
-as `setenv EDITOR /usr/bin/vi`.
+[Installation instructions](docs/install.md). Note that:
+* paradux depends on `cryptsetup` and thus only works on Linux.
+  (Want to port to Windows or the Mac? Pull requests appreciated!)
+* The edit functionality depends on the `EDITOR` environment variable being
+  set to your favorite editor, such as `export EDITOR=/usr/bin/vi`.
+* The following executables must be installed for upload: `ssh` and
+  `rsync`.
 
-There are some examples for the data files:
-* [datasets](example-data/datasets.json)
-* [stewards](example-data/stewards.json)
-* [user](example-data/user.json)
+There are some examples for the data files in [directory example-data](example-data/)
 
-Here is a typical sequence to set up the scheme
-* Create a new paradux configuration: `paradux init`. This will ask you
-  to set your everyday password.
-* Enter your datasets when prompted by `paradux edit-datasets`. See examples
-  linked above.
-* Export your encrypted configuration (automatically strips everyday password)
-  with `paradux export-configuration` and store it in various on-line
-  locations from where your stewards can recover it.
-* Find a set of N stewards whom you trust. Enter their information when
-  prompted by `paradux edit-stewards` (see example file above)
-* Give your stewards their respective steward package. You export them with
-  `paradux export-steward-packages`. Currently you need to manually add
-  the location of your exported encrypted configuration.
-
-To update the configuration:
-* Edit your configuration again, and overwrite the uploaded encrypted
-  configuration files with the new file.
-
-To recover in case of disaster:
-* Install paradux on a new machine
-* From your stewards, find the location of one of the encrypted configuration
-  files and download it
-* Find at least three stewards (the number was configurable during
-  init) and obtain their fragment of the recovery secret
-* [For now](https://github.com/paradux/paradux/issues/8), assemble the
-  information you got from the stewards into a JSON file.
-* Run `paradux recover`.
-
+More details are in the most current presentation at
+[upon2020.com/talks/paradux](https://upon2020.com/talks/paradux/).

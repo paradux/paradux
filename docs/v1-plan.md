@@ -19,14 +19,15 @@ Plan for V1
   unlikely that when the user edits one of them, they will accidentally screw up some
   other data.
 
-* There may be some other JSON file(s) that aren't edited directly by the user
+* There may be some other JSON file(s) that aren't edited directly by the user,
+  such as the file that contains the cryptographic parameters.
 
 * One of the JSON files describes the DataSets and each data location in each
   DataSet. (We have started to use different names for those things than in the blog post,
   because I'm told those are difficult-to-follow terms.)
 
 * Just like the sub-commands should be pluggable, there should be a
-  pluggable set of backup protocols, e.g. ftp, S3, disk, ...
+  pluggable set of data transfer protocols, e.g. ftp, s3, file, ...
   and common backup software like restic etc. Each Data Location defined
   in the JSON file indicates which backup protocol to use.
 
@@ -58,4 +59,3 @@ Plan for V1
 * The recovery secret is a long, random integer that is only stored within the LUKS
   file (otherwise we can't create more shares for more Stewards) and conveyed as
   Shamir shares (i.e. only in pieces) to the Stewards.
-
