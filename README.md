@@ -1,37 +1,38 @@
-# Paradux: recover from maximum personal data disaster
+# Paradux: recover from maximum data disaster
 
 ## What's this about?
 
 Many of the residents of the towns that were wiped out recently by the
 California wildfires did not have time to grab their laptops, bring their
 hard disks, or take their password recovery sheets with them. Similarly,
-what if your favorite cloud services simply kicked you off? Personal data
+what if your favorite cloud services simply kicked you off? Data
 disasters lurk everywhere. If one hits you, could you recover your data
 and your passwords?
 
 Paradux is a new scheme, and supporting software, that stores your
-personal data, and your passwords, in several different places that you
+data, and your passwords, in several different places that you
 choose, so that:
 
-* no third party can read it
-* there are redundant copies of everything
-* the effort for you to maintain the scheme is minimal, and
-* you can recover even if you remember nothing and have full amnesia.
+* no third party can read it,
+* there are redundant copies of everything,
+* the effort for you to maintain the scheme is minimal, 
+* you can recover even if you remember nothing, and
+* your stewards can recover in your stead if you are incapacitated.
 
 It does this with the help of cryptographic key splitting and trusted
-friends. It applies to personal data, and secrets like passwords and
-private keys.
+stewards. It applies to personal data, business data and secrets like
+passwords and private keys.
 
 ## Linuxfest NorthWest 2019 presentation
 
 The [Paradux presentation](https://lfnw.org/conferences/2019/program/proposals/264)
-at Linuxfest Northwest 2019 was recorded! Here it is:
+at Linuxfest Northwest 2019 discussing Paradux 0.1 was recorded! Here it is:
 
 [![YouTube video](http://img.youtube.com/vi/Ld85wTh9uZs/0.jpg)](http://www.youtube.com/watch?v=Ld85wTh9uZs "YouTube video")
 
 ## Status
 
-Version 0.2 is here. It's somewhat painful to use (edit JSON files!
+Version 0.2 is here. It's still somewhat painful to use (edit JSON files!
 Manually upload data! Bring your terminal skills! Linux only so far.)
 but the most important functionality is working.
 
